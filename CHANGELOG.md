@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Production dùng hai mô hình đối sánh đã huấn luyện
+
+- `docker-compose.prod.yml`: `MATCHING_MODEL_PATH`/`MATCHING_MODEL_VERSION` chuyển sang
+  `e5-base-wise-v1`, thêm `MATCHING_RERANKER_BACKEND: cross_encoder` (`req-ce-v1`), `mem_limit`
+  của `ml-worker` từ 1792m lên 2560m (hai mô hình cùng nạp đạt đỉnh 2,05–2,14 GB khi chấm).
+- Trước khi deploy bản này phải có hai thư mục mô hình trên máy chủ
+  (`scripts/deploy/sync_ml_models.sh` với `MODEL=multilingual-e5-base/wise-v1` và
+  `MODEL=mmarco-mMiniLMv2-L12/req-ce-v1`) và chạy `matching_backfill --inline` sau deploy.
+  Quay lui về mô hình gốc: `docs/06-deployment/van-hanh-va-kill-switch.md`.
+
 #### Added — Lõi đối sánh CV–tin: công thức `hybrid-v3`, bi-encoder và cross-encoder đã huấn luyện
 
 - Công thức chấm `hybrid-v3` (`apps/matching`). **Nhóm kỹ năng thay thế** có hiệu lực ngay:

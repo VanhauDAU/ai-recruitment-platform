@@ -285,10 +285,11 @@ Không gọi dịch vụ ngoài; mô hình chạy trong service `ml-worker`.
 
 ### Bật mô hình đã huấn luyện (`e5-base-wise-v1` + `req-ce-v1`)
 
-Mặc định sản phẩm chạy mô hình gốc `e5-base-zs-v1`, không cross-encoder. Số đo của cấu hình
-mới ở mục 7 của [`thuat-toan-ai.md`](../07-algorithms/thuat-toan-ai.md).
+Production dùng cấu hình mới từ 27/11/2026 (`docker-compose.prod.yml`). Mặc định của mã
+(local chưa đặt biến, CI) vẫn là mô hình gốc `e5-base-zs-v1`, không cross-encoder. Số đo của
+cấu hình mới ở mục 7 của [`thuat-toan-ai.md`](../07-algorithms/thuat-toan-ai.md).
 
-| Biến | Mặc định | Cấu hình mới |
+| Biến | Mặc định của mã | Cấu hình mới (production) |
 | --- | --- | --- |
 | `MATCHING_MODEL_PATH` | `/models/multilingual-e5-base/zs-v1` | `/models/multilingual-e5-base/wise-v1` |
 | `MATCHING_MODEL_VERSION` | `e5-base-zs-v1` | `e5-base-wise-v1` |
@@ -309,7 +310,8 @@ docker compose up -d --force-recreate backend ml-worker
 docker compose exec ml-worker python manage.py matching_backfill --inline
 ```
 
-Production (làm theo thứ tự để không có lúc nào web thiếu vector):
+Production (thứ tự đã dùng khi bật 27/11; lặp lại khi đổi sang mô hình khác, để không có lúc
+nào web thiếu vector):
 
 1. Trên máy dev, đẩy hai thư mục mô hình:
    `MODEL=multilingual-e5-base/wise-v1 scripts/deploy/sync_ml_models.sh deploy@<ip>` và
@@ -319,16 +321,16 @@ Production (làm theo thứ tự để không có lúc nào web thiếu vector):
    `scripts/deploy/compose.sh run --rm -e MATCHING_MODEL_PATH=/models/multilingual-e5-base/wise-v1
    -e MATCHING_MODEL_VERSION=e5-base-wise-v1 ml-worker python manage.py matching_backfill --inline`.
 3. Sửa `docker-compose.prod.yml`: ba biến ở bảng trên trong `x-prod-env`, và `mem_limit` của
-   `ml-worker` từ `1792m` lên `2304m`. Đo trên máy dev 27/11: hai mô hình cùng nạp đạt đỉnh
-   2,05–2,14 GB khi chấm (chỉ bi-encoder: 1,48 GB), nên giới hạn 1.792 MB sát trần. Không muốn
-   nâng bộ nhớ thì để `MATCHING_RERANKER_BACKEND=none`: vẫn được bi-encoder mới, mất phần phán
+   `ml-worker` từ `1792m` lên `2560m`. Đo trên máy dev 27/11: hai mô hình cùng nạp đạt đỉnh
+   2,05–2,14 GB khi chấm (chỉ bi-encoder: 1,48 GB), healthcheck thêm khoảng 75 MB, nên giới hạn
+   1.792 MB sát trần. Không muốn nâng bộ nhớ thì để `MATCHING_RERANKER_BACKEND=none`: vẫn được bi-encoder mới, mất phần phán
    từng yêu cầu (Spearman validation 0,815 thay vì 0,822, NDCG@5 0,874 thay vì 0,921).
 4. Deploy, rồi chạy lại `matching_backfill --inline` trong `ml-worker` cho CV và tin lưu
    trong lúc chuyển. `--only applications` chấm lại hồ sơ ứng tuyển theo công thức mới.
 5. Kiểm: `docker stats` của `ml-worker` lúc backfill; bấm "Xem độ phù hợp" với một CV đúng
    nghề và một CV khác ngành; `result_json.meta` ghi `model_version` và `reranker_version` mới.
 
-Quay lui: trả ba biến và `mem_limit` về giá trị cũ rồi deploy. Kết quả cũ không bị ghi đè
+Quay lui: trả ba biến về cột "Mặc định của mã" (và `mem_limit` về `1792m` nếu cần) rồi deploy. Kết quả cũ không bị ghi đè
 (khóa cache gồm phiên bản mô hình và `hybrid-v3` hoặc `hybrid-v3+req-ce-v1`). Chỉ xóa thư mục
 `multilingual-e5-base/zs-v1` trên máy chủ (1,1 GB đĩa) khi không còn cần đường quay lui này;
 xóa nó **không** giảm RAM, vì `ml-worker` mỗi lúc chỉ nạp một bi-encoder.

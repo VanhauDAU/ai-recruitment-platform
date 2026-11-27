@@ -80,8 +80,8 @@ luyện ở [`ml/`](../ml/README.md).
 | `hybrid-v2` phần không cần huấn luyện | ✅ | Bỏ địa điểm, trần theo mức liên quan |
 | NTD xếp hạng hồ sơ, hồ sơ trích xuất, Tìm CV | ✅ | |
 | Dữ liệu huấn luyện, bi-encoder `e5-base-wise-v1`, cross-encoder `req-ce-v1` | ✅ | Validation: Spearman 0,705 → 0,822, NDCG@5 0,870 → 0,921 ([mục 7](07-algorithms/thuat-toan-ai.md)) |
-| Công thức `hybrid-v3`, cross-encoder trong `ml-worker`, `result_json` bản 3 | ✅ | Nhóm kỹ năng thay thế chạy ngay; hai mô hình mới chưa bật mặc định |
-| Bật hai mô hình mới ở local và trên máy chủ | ⬜ | [Quy trình](06-deployment/van-hanh-va-kill-switch.md#bật-mô-hình-đã-huấn-luyện-e5-base-wise-v1--req-ce-v1); cần nâng `mem_limit` của `ml-worker` |
+| Công thức `hybrid-v3`, cross-encoder trong `ml-worker`, `result_json` bản 3 | ✅ | |
+| Cấu hình production dùng hai mô hình mới | ✅ | Từ 27/11; [quy trình và quay lui](06-deployment/van-hanh-va-kill-switch.md#bật-mô-hình-đã-huấn-luyện-e5-base-wise-v1--req-ce-v1) |
 | Chạy tập test một lần, nghiệm thu | ⬜ | 27/12/2026, chỉ chạy một lần; người đã chấm mù 50 cặp (kappa 0,915) |
 | Tìm ứng viên bằng câu tự do | ⬜ | Web không có torch; hiện tìm theo tin đang tuyển |
 
@@ -101,7 +101,7 @@ Sắp theo hạn. Khi xong một việc, xóa dòng ở đây và sửa trạng 
 | Việc | Hạn hoặc điều kiện | Ghi chú |
 | --- | --- | --- |
 | Go-live procv.site | 2/12/2026 | Tài khoản ngoài và các bước trong ngày ở [go-live](06-deployment/go-live.md) |
-| Bật mô hình đối sánh đã huấn luyện, chạy tập test | Test: 27/12/2026 | Mã và số đo đã có; bật theo [vận hành](06-deployment/van-hanh-va-kill-switch.md#đối-sánh-cvtin-chạy-local) |
+| Chạy tập test của mô hình đối sánh | 27/12/2026 | Chỉ chạy một lần (`evaluate.py --split test --final`) |
 | Báo cáo đồ án, slide, diễn tập demo | Nộp 12/2026 | Sau khi sửa nguồn sơ đồ, vẽ lại hình bằng `sh docs/01-phan-tich/mo-hinh-hoa-yeu-cau/cong-cu/build.sh` |
 | Kích hoạt ER-3, bằng chứng DPA, gateway SMS | Khi có nhà cung cấp production | [vận hành](06-deployment/van-hanh-va-kill-switch.md) |
 | Sửa lời cảnh báo email tên miền ở trang đăng ký NTD | Không chặn | Câu `employer_account_register_domain_warning` hứa giới hạn "mua hoặc sử dụng" không tồn tại |
