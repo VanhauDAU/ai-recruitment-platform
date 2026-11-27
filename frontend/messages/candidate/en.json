@@ -286,5 +286,7 @@
   "candidate_cv_book_play": "Turn pages automatically",
   "candidate_cv_book_pause": "Stop turning pages",
   "candidate_cv_book_seek": "Choose a page",
-  "candidate_cv_book_progress": "Page {current}/{total}"
+  "candidate_cv_book_progress": "Page {current}/{total}",
+  "candidate_cv_book_cover_edition": "A collection of {count} CV templates",
+  "candidate_cv_book_cover_label": "Cover"
 }
