@@ -329,7 +329,7 @@ tính sẵn khi lưu CV và tin; chỉ dùng bản hiện hành (`MatchDocument.
 | `semantic-v1` (e5-base gốc) | 0,650 | 0,975 | 0,780 | 0,430 | 0,830 |
 
 Ngang luật ở việc đưa đúng tin gốc của CV lên đầu, hơn ở việc gợi ý các tin cùng vị trí khác.
-Với bi-encoder đã huấn luyện `e5-base-wise-v1` (chưa bật mặc định, xem cuối mục): tin neo ở
+Với bi-encoder đã huấn luyện `e5-base-wise-v1` (production dùng từ 27/11, xem cuối mục): tin neo ở
 hạng 1 0,762, trong top 10 0,988, MRR 0,867, precision@5 0,490, NDCG@10 0,913, hơn luật ở mọi cột.
 
 Mức cộng vị trí mong muốn chọn bằng mô phỏng trên cùng 100 CV (`--intent-study`):
@@ -487,9 +487,10 @@ Không tìm bằng câu tự do: so ngữ nghĩa một câu truy vấn cần mã
 trình web không có mô hình; tin tuyển dụng là "câu truy vấn" đã được mã hóa sẵn. Đo trên DB
 dev với 100 CV tổng hợp bật tìm kiếm: một lượt tìm khoảng 0,02–0,06 giây.
 
-**Đợt huấn luyện 26–27/11: `hybrid-v3`, `e5-base-wise-v1`, `req-ce-v1`.** Mã đã có trong
-`apps/matching`; cấu hình mặc định của sản phẩm **vẫn là mô hình gốc** `e5-base-zs-v1`, không
-cross-encoder. Bật mô hình mới theo [vận hành](../06-deployment/van-hanh-va-kill-switch.md#đối-sánh-cvtin-chạy-local).
+**Đợt huấn luyện 26–27/11: `hybrid-v3`, `e5-base-wise-v1`, `req-ce-v1`.** Production dùng hai
+mô hình mới từ 27/11 (`docker-compose.prod.yml`); mặc định của mã (local chưa đặt biến, CI)
+vẫn là mô hình gốc `e5-base-zs-v1`, không cross-encoder. Cách bật và quay lui ở
+[vận hành](../06-deployment/van-hanh-va-kill-switch.md#đối-sánh-cvtin-chạy-local).
 
 Ba thay đổi của công thức `hybrid-v3` so với `hybrid-v2` (`services/scoring/`):
 
@@ -556,8 +557,8 @@ Các phép đo khác:
 
 Bộ nhớ và độ trễ (máy dev, CPU trong container): `ml-worker` nạp bi-encoder và cross-encoder
 đạt đỉnh 2,05–2,14 GB khi chấm; chỉ bi-encoder 1,48 GB. Chạy được 40 cặp dưới giới hạn
-1.792 MB của production mà không bị dừng, nhưng sát trần, nên bật cross-encoder thì nâng
-`mem_limit` lên 2.304 MB. Cross-encoder thêm khoảng 0,6 giây mỗi cặp. Tiến trình web không nạp
+1.792 MB của production mà không bị dừng, nhưng sát trần, nên production đặt
+`mem_limit` 2.560 MB. Cross-encoder thêm khoảng 0,6 giây mỗi cặp. Tiến trình web không nạp
 mô hình: gợi ý việc làm và Tìm CV chỉ đổi theo vector và mốc quy đổi mới; Tìm CV không truyền
 câu yêu cầu nên không có cross-encoder và chưa dùng nhóm kỹ năng thay thế.
 
@@ -582,5 +583,5 @@ cho tập hiệu chỉnh; Tìm CV dùng nhóm kỹ năng thay thế.
   theo người dùng ngoài throttle `cv_import`.
 - Chưa có trích xuất kỹ năng tự động vào `CvSkill` và OCR cho PDF scan. Hai Site Setting không có code đọc
   (`ai_cv_review_enabled`, `ai_daily_request_limit`) đã được gỡ theo ADR-0026.
-- Đối sánh ngữ nghĩa (mục 7) đang chạy bằng mô hình gốc; hai mô hình đã huấn luyện
-  (`e5-base-wise-v1`, `req-ce-v1`) chưa bật trong cấu hình mặc định và tập test chưa chạy.
+- Đối sánh ngữ nghĩa (mục 7): tập test chưa chạy (27/12); số năm kinh nghiệm còn nhẹ trong
+  điểm tổng khi chuyên môn khớp hoàn toàn (CV 9 tháng với tin yêu cầu 5 năm vẫn đạt mức cao).

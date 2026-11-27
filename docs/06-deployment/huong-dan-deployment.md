@@ -56,11 +56,11 @@ link email, thông báo) và `VITE_*_HOST` (build frontend) phải khớp `serve
 | `worker` | 1,125 GB | concurrency 3: `default`, `cv-export` (Chromium xuất PDF CV + báo cáo chiến dịch), `upload-scan`, `candidate-email` |
 | `email-worker` | 512 MB | concurrency 1: `auth-email`, `auth-sms` — OTP/đặt lại mật khẩu không chờ sau PDF |
 | `ai-worker` | 512 MB | queue `ai-generation` |
-| `ml-worker` | 1,75 GB | e5-base nằm sẵn trong RAM (~0,9 GB lúc rảnh); `cpus: 2`, `OMP/MKL_NUM_THREADS=2` |
+| `ml-worker` | 2,5 GB | bi-encoder e5-base và cross-encoder nằm sẵn trong RAM (đỉnh đo được 2,05–2,14 GB khi chấm); `cpus: 2`, `OMP/MKL_NUM_THREADS=2` |
 | `clamav` (profile `scanner`, đang tắt) | 4 GB | quét upload session khi `UPLOAD_QUARANTINE_ENABLED=True`; ~1,2–1,5 GB lúc rảnh, ~3 GB khi nạp lại bộ nhận diện |
 | `beat`, `web` | 384 MB, 128 MB | |
 
-Tổng trần ~12,4 GB: cần máy **≥ 12–16 GB RAM** (bootstrap tạo thêm 4 GB swap).
+Tổng trần ~13,2 GB: cần máy **≥ 12–16 GB RAM** (bootstrap tạo thêm 4 GB swap).
 ClamAV đang tắt mặc định (`UPLOAD_QUARANTINE_ENABLED: 'False'`, upload đi luồng cũ):
 bật lại bằng cách đặt cờ `'True'` trong `x-prod-env` và chạy compose với
 `--profile scanner`. Không có ClamAV thì tổng ~8 GB, sát trần máy 8 GB. Đo trên VPS 16 GB lúc rảnh sau khi nạp
@@ -275,7 +275,8 @@ scripts/deploy/sync_ml_models.sh deploy@<ip-vps>
 ```
 
 Mặc định đẩy mô hình gốc `multilingual-e5-base/zs-v1`; mô hình khác chọn bằng biến `MODEL`.
-Bật hai mô hình đã huấn luyện: [vận hành](van-hanh-va-kill-switch.md#đối-sánh-cvtin-chạy-local).
+Production cần hai thư mục `multilingual-e5-base/wise-v1` và `mmarco-mMiniLMv2-L12/req-ce-v1`
+(thiếu thì `ml-worker` không khởi động được): [vận hành](van-hanh-va-kill-switch.md#đối-sánh-cvtin-chạy-local).
 
 ## 5. Deploy lần đầu
 
