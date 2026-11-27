@@ -18,6 +18,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Tiếng lật giấy khi người dùng tự lật (nút, vuốt), không phát khi sách tự lật; theo công tắc
   tắt chuông. Tệp nén từ 23 KB còn 3,5 KB (mono 44,1 kHz 48 kbps), tải ở lần lật đầu. Phần
   giải mã/phát Web Audio tách ra `shared/lib/sound-player` dùng chung với âm thanh toast.
+#### Fixed — Hết phiên chỉ hiện một thông báo
+
+- Trang gọi nhiều API cùng lúc khi phiên hết hạn từng hiện một toast "Phiên đăng nhập đã hết hạn"
+  cho mỗi request 401 (cổng quản trị hiện 3 cái). Các request cùng báo trong một lượt, trước khi
+  effect theo `user` kịp hạ `loggedInRef`; giờ handler hạ cờ ngay khi nhận lần báo đầu.
 
 #### Fixed — Sách mẫu CV trên điện thoại mở đủ hai trang
 

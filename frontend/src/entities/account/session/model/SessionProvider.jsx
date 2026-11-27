@@ -133,9 +133,12 @@ export default function SessionProvider({ children }) {
 
   // Refresh hỏng giữa chừng: dọn state và đưa về trang đăng nhập của cổng hiện
   // tại. Không có nhánh này thì guard vẫn thấy isAuthenticated=true và giữ người
-  // dùng ở lại workspace trong khi mọi request đều 401.
+  // dùng ở lại workspace trong khi mọi request đều 401. Các request 401 song
+  // song cùng báo trong một lượt, trước khi effect theo `user` kịp hạ cờ, nên
+  // phải hạ cờ ngay tại đây để chỉ lần đầu hiện toast.
   useEffect(() => subscribeToSessionExpired(() => {
     if (!loggedInRef.current) return
+    loggedInRef.current = false
     clearSessionState()
     message.warning(m.session_expired())
     navigate(loginPathForCurrentPortal(), { replace: true })

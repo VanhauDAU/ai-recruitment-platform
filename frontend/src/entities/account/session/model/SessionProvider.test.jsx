@@ -153,15 +153,21 @@ describe('SessionProvider', () => {
     expect(localStorage.getItem('main_access_token')).toBeNull()
   })
 
-  it('sends an employer back to their portal login when the session expires', async () => {
+  it('sends an employer back to their portal login once when parallel requests expire', async () => {
     window.history.replaceState({}, '', '/tuyendung/app/tong-quan')
     getCurrentSessionUser.mockResolvedValue({ public_id: 'employer-1', role: 'employer' })
     const { result } = renderHook(() => useSession(), { wrapper })
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
 
-    act(() => notifySessionExpired())
+    // Ba request 401 song song cùng báo phiên hết hạn trong một lượt.
+    act(() => {
+      notifySessionExpired()
+      notifySessionExpired()
+      notifySessionExpired()
+    })
 
     expect(result.current.isAuthenticated).toBe(false)
+    expect(navigate).toHaveBeenCalledTimes(1)
     expect(navigate).toHaveBeenCalledWith('/tuyendung/app/dang-nhap', { replace: true })
     expect(message.warning).toHaveBeenCalledTimes(1)
   })
