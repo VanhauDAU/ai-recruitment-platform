@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Added — Chia sẻ tin tuyển dụng lên các nền tảng trên điện thoại; thẻ mẫu CV 3D tự luân phiên
+
+- Nút chia sẻ ở đầu trang chi tiết tin trước chỉ sao chép liên kết (thanh nút mạng xã hội chỉ có
+  từ 1280px). Dưới 768px nút mở tấm trượt: thẻ tin, "Gửi qua ứng dụng" mở bảng chia sẻ của máy
+  (Zalo, Messenger, tin nhắn; chỉ hiện khi trình duyệt hỗ trợ), Facebook, LinkedIn, X, Telegram,
+  Email và ô sao chép liên kết. Từ 768px nút mở popover với các nút mạng xã hội. Link chia sẻ
+  bỏ query/hash để khớp thẻ OG; deep-link gom về `shared/lib/share-links`.
+- Khối "Tạo CV ấn tượng" trang chủ: desktop thành băng chuyền 3D (thẻ giữa nhô ra, hai thẻ bên
+  xoay 38° và lùi sâu), cứ 3,6 giây các thẻ đổi chỗ, thẻ giữa nổi nhẹ và có vệt sáng lướt qua;
+  điện thoại coverflow sâu hơn và tự trượt sang thẻ kế. Dừng khi rê chuột/chạm, khi khối ngoài
+  khung nhìn, khi tab ẩn hoặc bật giảm chuyển động; chấm trang hiện ở mọi cỡ màn hình.
+
 #### Changed — Khối "Tạo CV ấn tượng" gọn trên điện thoại; trang chủ hết giật layout
 
 - Dưới 1024px khối mẫu CV đổi thứ tự: tiêu đề → dãy thẻ CV vuốt kiểu coverflow (thẻ giữa

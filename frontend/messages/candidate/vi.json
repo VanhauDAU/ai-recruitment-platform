@@ -270,5 +270,10 @@
   "candidate_job_fit_next_step": "Nên làm trước",
   "candidate_job_fit_all_suggestions": "Xem cả {count} gợi ý",
   "candidate_cv_showcase_pick": "Chọn mẫu CV",
-  "candidate_cv_showcase_view": "Xem mẫu {name}"
+  "candidate_cv_showcase_view": "Xem mẫu {name}",
+  "candidate_job_share_title": "Chia sẻ việc làm",
+  "candidate_job_share_native": "Gửi qua ứng dụng",
+  "candidate_job_share_native_hint": "Zalo, Messenger, tin nhắn…",
+  "candidate_job_share_copy": "Sao chép",
+  "candidate_job_share_copied": "Đã sao chép"
 }

@@ -497,3 +497,179 @@
   height: 260px;
   margin-top: 12px;
 }
+
+/* ── Chia sẻ việc làm (JobShareButton) ──
+   Popover từ md: hàng nút mạng xã hội dùng chung. Dưới md: tấm trượt đáy gồm thẻ tin,
+   nút mở bảng chia sẻ của máy (Zalo/Messenger), lưới nền tảng và ô sao chép liên kết. */
+.job-share-popover {
+  display: flex;
+  gap: 8px;
+}
+
+.job-share {
+  display: grid;
+  gap: 14px;
+  padding: 4px 16px 16px;
+}
+
+.job-share__job {
+  border-left: 3px solid var(--brand-primary);
+  padding-left: 10px;
+}
+
+.job-share__job-title {
+  color: #0f172a;
+  display: -webkit-box;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.job-share__job-company {
+  color: #64748b;
+  font-size: 13px;
+  margin: 2px 0 0;
+}
+
+.job-share__native {
+  align-items: center;
+  background: var(--brand-primary-soft);
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 22%, transparent);
+  border-radius: 14px;
+  color: var(--brand-primary-hover);
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  transition: background-color .2s, transform .15s;
+}
+
+.job-share__native:active {
+  transform: scale(.98);
+}
+
+.job-share__native-icon {
+  align-items: center;
+  background: var(--brand-primary);
+  border-radius: 12px;
+  color: #fff;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 18px;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+.job-share__native-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.job-share__native-text strong {
+  font-size: 15px;
+}
+
+.job-share__native-text small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.job-share__grid {
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.job-share__target {
+  align-items: center;
+  background: none;
+  border: 0;
+  border-radius: 12px;
+  color: #334155;
+  cursor: pointer;
+  display: grid;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+  justify-items: center;
+  padding: 8px 2px;
+}
+
+.job-share__target-icon {
+  align-items: center;
+  background: var(--share-color);
+  border-radius: 999px;
+  color: #fff;
+  display: flex;
+  font-size: 20px;
+  height: 48px;
+  justify-content: center;
+  transition: transform .15s;
+  width: 48px;
+}
+
+.job-share__target:active .job-share__target-icon {
+  transform: scale(.9);
+}
+
+.job-share__target:focus-visible,
+.job-share__native:focus-visible,
+.job-share__copy:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.job-share__link {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+}
+
+.job-share__url {
+  color: #475569;
+  flex: 1;
+  font-size: 13px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-share__copy {
+  align-items: center;
+  background: var(--brand-primary);
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 14px;
+  transition: background-color .2s;
+}
+
+.job-share__copy.is-copied {
+  background: #0f766e;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .job-share__native,
+  .job-share__target-icon {
+    transition: none;
+  }
+}
