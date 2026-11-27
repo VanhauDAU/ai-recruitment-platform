@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Fixed — Ảnh WebP trên R2 mang đúng Content-Type; sách mẫu CV trên điện thoại giữ dáng sách mở
+
+- Python 3.11 trong image backend không biết đuôi `.webp`, nên django-storages ghi
+  `application/octet-stream` cho mọi ảnh WebP (181/192 tệp trong bucket public: ảnh mẫu CV, ảnh
+  blog, danh mục, banner, logo). Khai báo `image/webp` trong cấu hình lưu trữ cho mọi tiến trình.
+- Sách mẫu CV trên điện thoại không còn lật mất trang: vẫn là sách mở, trang đang đọc chiếm 78%,
+  trang vừa đọc lật qua gáy và nằm lại bên trái (ló một dải). Bỏ thanh điều khiển dưới 640px (lật
+  bằng vuốt và tự lật). Mọi cỡ màn hình tự lật mỗi 5 giây.
+
 #### Changed — Ảnh mẫu CV chuyển sang WebP, thẻ và sách mẫu dùng bản thu nhỏ
 
 - Ảnh mẫu CV sinh từ PDF lưu WebP chất lượng 85 thay PNG (đo một mẫu thật: 600px 85→36 KB,

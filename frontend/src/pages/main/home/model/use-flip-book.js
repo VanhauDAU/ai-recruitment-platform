@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 
-const AUTO_FLIP_MS = 4200
+const AUTO_FLIP_MS = 5000
 // Người dùng vừa chạm/vuốt/kéo thanh trang: đợi một lúc rồi mới tự lật lại.
 const RESUME_AFTER_TOUCH_MS = 9000
 const SWIPE_PX = 40
