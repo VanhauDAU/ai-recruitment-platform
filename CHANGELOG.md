@@ -20,6 +20,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   lỗi "Vui lòng nhập email" bị cảnh báo tên miền công ty đè lên.
 - Panel bên phải đổi từ số minh họa sang số liệu thật của nền tảng (`/public/jobs/stats/`): số
   ứng viên, việc làm đang tuyển, công ty và biểu đồ việc làm mới 7 ngày; chỉ tải khi panel hiện.
+#### Changed — Hộp thoại "Xem độ phù hợp" gọn lại, nằm trọn trong màn hình, ghi tên mô hình
+
+- Hộp thoại không còn cao hơn màn hình: tiêu đề, phần kết luận (mức, điểm, thước bốn dải) và
+  chân hộp thoại đứng yên, chỉ nội dung ở giữa cuộn. Trên điện thoại hộp thoại chiếm trọn màn
+  hình. Chiều cao cố định khi có kết quả nên đổi phần xem không làm hộp thoại nhảy.
+- Kết quả chia bốn tab có số đếm: **Tổng quan** (năm tiêu chí, mỗi tiêu chí một dòng gồm tên,
+  thanh điểm, số; bấm để xem cách tính, tiêu chí yếu nhất mở sẵn; kèm việc nên làm trước),
+  **Kỹ năng**, **Yêu cầu** (có chú giải ba ký hiệu), **Gợi ý**. Đổi tab bằng phím mũi tên được.
+- Chân hộp thoại ghi mô hình đã chấm (`meta.model_version`, kèm `meta.reranker_version` nếu
+  có), ví dụ "Mô hình AI: e5-base-wise-v1 + req-ce-v1", cạnh nút "Ứng tuyển tin này".
+- Chuỗi mới nằm ở `messages/candidate` (vi/en); trần chữ viết cứng `features/main` còn 620.
 #### Changed — Dọn `ml/` sau đợt huấn luyện
 
 - `ml/scripts/run_training.sh` dựng lại đúng cấu hình đang dùng: thêm mini-batch 2, nội suy

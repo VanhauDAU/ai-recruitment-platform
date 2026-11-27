@@ -75,6 +75,7 @@ export default function JobFitDialog({ job, onClose, onApply }) {
   const defaultCvId = fit.cvs.find((cv) => cv.is_default)?.public_id || fit.cvs[0]?.public_id
   const showPicker = picking || !analysis
   const succeeded = analysis?.status === 'succeeded'
+  const showResult = !showPicker && succeeded
 
   function analyze(cvPublicId) {
     setPicking(false)
@@ -82,8 +83,8 @@ export default function JobFitDialog({ job, onClose, onApply }) {
   }
 
   return (
-    <Modal open title="Độ phù hợp của CV với tin này" onCancel={onClose} footer={null} width={720} destroyOnHidden>
-      <div className="jf-dialog">
+    <Modal open centered rootClassName={`jf-modal${showResult ? ' jf-modal--result' : ''}`} title="Độ phù hợp của CV với tin này" onCancel={onClose} footer={null} width={720} destroyOnHidden>
+      <div className={`jf-dialog${showResult ? ' jf-dialog--result' : ''}`}>
         {showPicker ? (
           <CvPicker
             cvs={fit.cvs}
@@ -108,15 +109,11 @@ export default function JobFitDialog({ job, onClose, onApply }) {
         {!showPicker && analysis?.status === 'failed' && (
           <Alert type="warning" showIcon message={analysisErrorCopy(analysis.error_code)} />
         )}
-        {!showPicker && succeeded && (
-          <>
-            <JobFitResult result={analysis.result} />
-            {onApply && (
-              <div className="jf-actions">
-                <Button type="primary" size="large" onClick={() => { onClose(); onApply() }}>Ứng tuyển tin này</Button>
-              </div>
-            )}
-          </>
+        {showResult && (
+          <JobFitResult
+            result={analysis.result}
+            actions={onApply && <Button type="primary" onClick={() => { onClose(); onApply() }}>Ứng tuyển tin này</Button>}
+          />
         )}
       </div>
     </Modal>
