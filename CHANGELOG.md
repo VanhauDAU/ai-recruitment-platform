@@ -6,6 +6,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-28
+
+#### Fixed — ml-worker kẹt: so sánh JD–CV và hồ sơ trích xuất CV không chạy
+
+- `CELERY_WORKER_PROC_ALIVE_TIMEOUT = 120` (mặc định 4 giây). Tiến trình con của ml-worker
+  nạp bi-encoder + cross-encoder mất ~10 giây trên VPS; sau khi tiến trình con đầu tiên chạy
+  đủ `--max-tasks-per-child=500` (~8 giờ), tiến trình thay thế bị SIGKILL lặp vô hạn nên queue
+  `ai-matching` đứng. Healthcheck vẫn báo healthy vì tiến trình chính còn trả lời ping.
+- Production kẹt từ 21:59 ngày 27/11 (631 task tồn); đã `docker restart` ml-worker 28/11 để
+  chạy lại tạm thời, bản sửa này chặn việc kẹt lại sau mỗi lần thay tiến trình con.
+
 ### 2026-11-27
 
 #### Fixed — Sổ tay mẫu CV trên điện thoại: hết sọc tối/sáng, chạm bìa để mở, tự lật có tiếng
