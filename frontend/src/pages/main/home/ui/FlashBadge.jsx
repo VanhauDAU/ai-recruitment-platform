@@ -116,7 +116,7 @@ export default function FlashBadge({ responseRate = 80, responseHours = 72 }) {
         </svg>
       </div>
 
-      <div className="relative max-w-6xl mx-auto grid grid-cols-1 gap-6 px-4 py-6 md:py-8 lg:grid-cols-[1fr_340px_240px]">
+      <div data-reveal-stagger className="relative max-w-6xl mx-auto grid grid-cols-1 gap-6 px-4 py-6 md:py-8 lg:grid-cols-[1fr_340px_240px]">
 
         {/* ── Cột trái ── */}
         <div>

@@ -81,7 +81,7 @@ export default function LatestJobsFeed({ jobs, enabled }) {
     <div>
       <Mascot />
       <p className="font-semibold mt-4 mb-3">Việc làm mới nhất</p>
-      <ul className="space-y-2.5 min-h-[180px]">
+      <ul className="latest-jobs-feed space-y-2.5">
         {feed.map((item, idx) => (
           <Tooltip
             key={item.uid}

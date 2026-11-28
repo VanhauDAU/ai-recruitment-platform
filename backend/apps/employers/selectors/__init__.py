@@ -19,6 +19,7 @@ from .catalogs import (
 )
 from .companies import (
     attach_active_public_job_counts,
+    email_sender_company_name,
     featured_public_companies,
     public_company_search_queryset,
     search_companies,
@@ -156,6 +157,7 @@ __all__ = [
     'domain_claim_allowed_actions',
     'effective_company_domain_claims',
     'attach_active_public_job_counts',
+    'email_sender_company_name',
     'featured_public_companies',
     'public_company_search_queryset',
     'search_companies',

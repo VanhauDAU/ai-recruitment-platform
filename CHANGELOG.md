@@ -15,8 +15,149 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   vào Tìm kiếm việc làm.
 - Trang danh sách mẫu CV dùng ảnh trợ lý ProCV mới (WebP 8 KB, trong `public/images`) thay ảnh
   mascot TopCV cũ trên R2.
+#### Changed — Email gửi ứng viên đứng tên công ty: "Tên công ty qua ProCV"
+
+- Email gửi ứng viên thay mặt nhà tuyển dụng (kết quả ứng tuyển, NTD xem/tải CV, lưu kho, lời
+  mời, lịch phỏng vấn, tự động từ chối, tin nhắn và lịch .ics ProCV Connect) hiện người gửi
+  `Công ty X qua ProCV <no-reply@procv.site>`. Địa chỉ gửi giữ nguyên tên miền của ProCV.
+- Chỉ dùng tên công ty đang có người đại diện hợp pháp, chống mạo danh (vd công ty tự đặt tên
+  ngân hàng). "Hồ sơ đã được tiếp nhận", gợi ý việc làm và mọi email gửi nhà tuyển dụng vẫn từ ProCV.
+- Cấu hình mới `email_company_sender_enabled` (bật sẵn) để tắt nhanh. Tên người gửi có ký tự đặc
+  biệt được đặt trong ngoặc kép: trước đây `email_from_name` có dấu phẩy làm lỗi header From.
+- Sau deploy chạy `seed_sitecontent` để hiện công tắc trong trang Cấu hình.
+
+#### Added — Google Analytics 4 theo cấu hình admin, chỉ khi đồng ý Hiệu năng
+
+- Key mới `seo_ga4_measurement_id` (Cấu hình → SEO → Đo lường): dán Measurement ID `G-…` của
+  luồng web GA4 là site bắt đầu gửi dữ liệu. Để trống thì không tải gì. Cấu hình hỗ trợ
+  `options.pattern` để chặn giá trị sai định dạng khi lưu.
+- gtag.js chỉ tải khi người xem đã đồng ý nhóm Hiệu năng, không tải ở cổng quản trị; rút đồng ý
+  thì ngừng gửi và xóa cookie `_ga*`. Bộ tải nằm ở chunk riêng (JS khởi tạo +0,2 KiB).
+- CSP cho phép `https://www.googletagmanager.com` trong `script-src`.
+- Chính sách cookie lên phiên bản 2 (thêm `_ga`, `_ga_<id>` và mục Google Analytics);
+  `CONSENT_POLICY_VERSION` mặc định 2 nên mọi người được hỏi lại đồng ý cookie.
+- Sau deploy: đặt `CONSENT_POLICY_VERSION=2` nếu `.env` production ghi 1, chạy
+  `seed_sitecontent`, rồi nhập Measurement ID ở trang Cấu hình.
+
+### 2026-11-28
+
+#### Fixed — ml-worker kẹt: so sánh JD–CV và hồ sơ trích xuất CV không chạy
+
+- `CELERY_WORKER_PROC_ALIVE_TIMEOUT = 120` (mặc định 4 giây). Tiến trình con của ml-worker
+  nạp bi-encoder + cross-encoder mất ~10 giây trên VPS; sau khi tiến trình con đầu tiên chạy
+  đủ `--max-tasks-per-child=500` (~8 giờ), tiến trình thay thế bị SIGKILL lặp vô hạn nên queue
+  `ai-matching` đứng. Healthcheck vẫn báo healthy vì tiến trình chính còn trả lời ping.
+- Production kẹt từ 21:59 ngày 27/11 (631 task tồn); đã `docker restart` ml-worker 28/11 để
+  chạy lại tạm thời, bản sửa này chặn việc kẹt lại sau mỗi lần thay tiến trình con.
 
 ### 2026-11-27
+
+#### Fixed — Sổ tay mẫu CV trên điện thoại: hết sọc tối/sáng, chạm bìa để mở, tự lật có tiếng
+
+- Màn cảm ứng không còn chia lá sách thành 4 dải (Safari iOS lộ sọc tối/sáng nhấp nháy giữa
+  các dải): dùng lá liền một tấm hai mặt, dải sáng chạy ngang mặt trang gợi độ cong. Máy có
+  chuột (`pointer: fine`) giữ lá cong 4 dải.
+- Chạm vào bìa là mở sách (bìa có dòng "Chạm để mở"), không cần vuốt. Lướt tới sách (một nửa
+  vào khung nhìn) thì sách tự mở sau 0,9 giây; tự lật đếm 5 giây từ lần lật gần nhất.
+- Sau lần đầu người dùng lật/chạm (âm thanh đã mở khoá), cả lần sách tự lật cũng có tiếng; trước
+  đó vẫn im vì trình duyệt chặn. Trên iPhone, gạt nút im lặng thì Safari tắt âm thanh Web Audio.
+
+#### Changed — Sổ tay mẫu CV: sách đóng mở bìa, lật mềm như giấy, có tiếng lật trang
+
+- Lúc đầu sách đóng, chỉ thấy bìa cứng xanh ở giữa; lật bìa thì sách mở hai trang (trang lót +
+  mẫu đầu) và trượt ra giữa cùng nhịp; hết trang cuối thì gập về bìa để vòng lại.
+- Lật mượt: góc xoay chạy một mạch với một đường cong tốc độ (trước có mốc giữa nên khựng ở
+  90°), nhấc lên là hiệu ứng riêng; lá sách chia 4 dải uốn cong (mép ngoài đi trước khi nhấc,
+  trễ lại khi hạ), bóng liền mạch qua các dải.
+- Tiếng lật giấy khi người dùng tự lật (nút, vuốt), không phát khi sách tự lật; theo công tắc
+  tắt chuông. Tệp nén từ 23 KB còn 3,5 KB (mono 44,1 kHz 48 kbps), tải ở lần lật đầu. Phần
+  giải mã/phát Web Audio tách ra `shared/lib/sound-player` dùng chung với âm thanh toast.
+#### Fixed — Hết phiên chỉ hiện một thông báo
+
+- Trang gọi nhiều API cùng lúc khi phiên hết hạn từng hiện một toast "Phiên đăng nhập đã hết hạn"
+  cho mỗi request 401 (cổng quản trị hiện 3 cái). Các request cùng báo trong một lượt, trước khi
+  effect theo `user` kịp hạ `loggedInRef`; giờ handler hạ cờ ngay khi nhận lần báo đầu.
+
+#### Fixed — Sách mẫu CV trên điện thoại mở đủ hai trang
+
+- Điện thoại không còn cắt trang trái: mọi cỡ màn hình dùng cùng cuốn sách mở hai trang, thu nhỏ
+  theo bề ngang (điện thoại nghiêng ít hơn). Gỡ chế độ một trang (step 1) khỏi hook và CSS.
+  Điện thoại vẫn không có thanh điều khiển, tự lật mỗi 5 giây.
+
+#### Fixed — Ảnh WebP trên R2 mang đúng Content-Type; sách mẫu CV trên điện thoại giữ dáng sách mở
+
+- Python 3.11 trong image backend không biết đuôi `.webp`, nên django-storages ghi
+  `application/octet-stream` cho mọi ảnh WebP (181/192 tệp trong bucket public: ảnh mẫu CV, ảnh
+  blog, danh mục, banner, logo). Khai báo `image/webp` trong cấu hình lưu trữ cho mọi tiến trình.
+- Sách mẫu CV trên điện thoại không còn lật mất trang: vẫn là sách mở, trang đang đọc chiếm 78%,
+  trang vừa đọc lật qua gáy và nằm lại bên trái (ló một dải). Bỏ thanh điều khiển dưới 640px (lật
+  bằng vuốt và tự lật). Mọi cỡ màn hình tự lật mỗi 5 giây.
+
+#### Changed — Ảnh mẫu CV chuyển sang WebP, thẻ và sách mẫu dùng bản thu nhỏ
+
+- Ảnh mẫu CV sinh từ PDF lưu WebP chất lượng 85 thay PNG (đo một mẫu thật: 600px 85→36 KB,
+  1200px 224→96 KB). `SNAPSHOT_RENDERER_VERSION` lên `catalogue-snapshot-v3` nên ảnh cũ được
+  dựng lại khi chạy `regenerate_all_template_snapshots`; mẫu mới/xuất bản lại tự sinh WebP.
+- `templatePreviewForColor` (thẻ `/mau-cv`, sách mẫu trang chủ) ưu tiên bản 600px thay bản 1200px;
+  trang chi tiết mẫu vẫn dùng bản lớn. Mỗi trang sách trên trang chủ từ ~224 KB còn ~36 KB.
+
+#### Changed — Mẫu CV trang chủ thành cuốn sách đang lật trang
+
+- Khối "Tạo CV ấn tượng" thay băng chuyền 3D bằng "Sổ tay mẫu CV": bìa → mỗi mẫu một trang
+  (bấm trang để xem chi tiết) → trang cuối "Xem tất cả mẫu CV". Từ 640px sách mở hai trang,
+  nghiêng nhẹ, mép giấy xếp lớp và bóng gáy; lá sách lật 3D quanh gáy, mặt trước tối dần,
+  mặt sau sáng dần, bóng đổ lên trang dưới. Điện thoại một trang, gáy trái, lật ra ngoài để
+  lộ trang kế; vuốt để lật. Chữ trong trang co theo bề rộng trang (container query).
+- Thanh điều khiển kiểu trình đọc sách: lật trước/sau, thanh kéo chọn trang, số trang, dừng/chạy
+  tự lật. Tự lật 4,2 giây/lần, dừng khi rê chuột/chạm, ngoài khung nhìn, tab ẩn hoặc bật giảm
+  chuyển động (lúc đó đổi trang tức thì). Tải trước ảnh của lần mở kế tiếp.
+- Gỡ băng chuyền cũ (`use-showcase-rotation`, CSS coverflow) và hai khóa i18n chấm trang.
+
+#### Changed — Băng chuyền mẫu CV trang chủ hiện tối đa 10 mẫu
+
+- Khối "Tạo CV ấn tượng" lấy tối đa 10 mẫu thay vì 3. Desktop: băng chuyền 3D 5 vị trí (thẻ giữa,
+  hai lớp mỗi bên xoay và lùi dần), các mẫu còn lại chờ phía sau và lần lượt xoay vào; điện thoại
+  vuốt qua đủ các mẫu, chấm trang theo số mẫu.
+
+#### Added — Chia sẻ tin tuyển dụng lên các nền tảng trên điện thoại; thẻ mẫu CV 3D tự luân phiên
+
+- Nút chia sẻ ở đầu trang chi tiết tin trước chỉ sao chép liên kết (thanh nút mạng xã hội chỉ có
+  từ 1280px). Dưới 768px nút mở tấm trượt: thẻ tin, "Gửi qua ứng dụng" mở bảng chia sẻ của máy
+  (Zalo, Messenger, tin nhắn; chỉ hiện khi trình duyệt hỗ trợ), Facebook, LinkedIn, X, Telegram,
+  Email và ô sao chép liên kết. Từ 768px nút mở popover với các nút mạng xã hội. Link chia sẻ
+  bỏ query/hash để khớp thẻ OG; deep-link gom về `shared/lib/share-links`.
+- Khối "Tạo CV ấn tượng" trang chủ: desktop thành băng chuyền 3D (thẻ giữa nhô ra, hai thẻ bên
+  xoay 38° và lùi sâu), cứ 3,6 giây các thẻ đổi chỗ, thẻ giữa nổi nhẹ và có vệt sáng lướt qua;
+  điện thoại coverflow sâu hơn và tự trượt sang thẻ kế. Dừng khi rê chuột/chạm, khi khối ngoài
+  khung nhìn, khi tab ẩn hoặc bật giảm chuyển động; chấm trang hiện ở mọi cỡ màn hình.
+
+#### Changed — Khối "Tạo CV ấn tượng" gọn trên điện thoại; trang chủ hết giật layout
+
+- Dưới 1024px khối mẫu CV đổi thứ tự: tiêu đề → dãy thẻ CV vuốt kiểu coverflow (thẻ giữa
+  thẳng và to, thẻ hai bên xoay vào, mờ dần theo vị trí vuốt; chạy bằng CSS scroll-driven,
+  không thêm thư viện) có chấm trang → 4 tính năng dạng lưới 2×2 chỉ icon + nhãn → nút
+  "Tạo CV ngay" rộng hết. Dãy mở đầu ở thẻ giữa, thẻ "chia bài" trượt vào khi khối hiện;
+  nền nhạt thay vệt xanh đậm. Desktop giữ bố cục xòe quạt.
+- Hiệu ứng vuốt chạy ở lớp trong của thẻ: biến dạng chính phần tử snap làm trình duyệt kéo
+  dãy thẻ lệch khỏi thẻ giữa.
+- Sửa giật layout dưới khối Thị trường: danh sách "Việc làm mới nhất" có 4 hàng trong 0,42
+  giây mỗi lần xoay (10 giây/lần) nên khối cao lên rồi co lại; nay khung cố định 3 hàng.
+  Lưới "Việc làm tốt nhất" cao thấp theo tiêu đề 1/2 dòng và trang cuối ít tin khi tự lật
+  trang; nay thẻ cao tối thiểu 113px và trang cuối có ô giữ chỗ. Đo trong 22 giây: dao động
+  vị trí khối bên dưới từ 241px (desktop) / 648px (điện thoại) còn 0 / 2px.
+
+#### Changed — Trang chủ ứng viên cuộn tới đâu tải tới đó, có hiệu ứng xuất hiện
+
+- Các khối dưới màn đầu (thị trường việc làm, Huy hiệu Sấm Chớp, mẫu CV, ngành/công ty nổi bật,
+  hotline) tách chunk riêng và chỉ dựng, gọi API, tải ảnh khi người dùng cuộn tới gần (cách
+  600px); giữ chỗ bằng chiều cao dự kiến + skeleton để thanh cuộn không giật. JavaScript của
+  route trang chủ lần tải đầu giảm 188,3 → 165,3 KiB gzip; bundle khởi tạo không đổi.
+- Hero trồi lên lần lượt khi vừa tải (khối banner chỉ trượt, không mờ dần để không trễ LCP);
+  mỗi khối trồi lên khi vào khung nhìn, thẻ trong lưới hiện so le; thanh tiến độ cuộn và lớp
+  trang trí parallax chạy bằng CSS scroll-driven, không JS. Chỉ animate opacity/translate,
+  điện thoại biên độ nhỏ hơn, tắt hết khi bật giảm chuyển động.
+- Sidebar tài khoản: "Xem hồ sơ NTD nhìn thấy" thành nút mềm cùng cỡ với "Đổi CV", hai nút
+  thẳng hàng thay vì link dính sát nút.
 
 #### Changed — Đăng nhập/đăng ký nhà tuyển dụng dễ dùng trên điện thoại
 

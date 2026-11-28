@@ -208,6 +208,16 @@
   }
 }
 
+/* "Việc làm mới nhất" luôn cao đúng 3 hàng (56px + khe 10px): tin mới chèn lên đầu thì
+   tin cũ bị đẩy ra ngoài khung và cắt đi, khối Thị trường không cao lên rồi co lại
+   mỗi 10 giây làm xô mọi thứ bên dưới. Đệm 4px cho viền + hiệu ứng phóng của tin mới. */
+.latest-jobs-feed {
+  height: calc(3 * 56px + 2 * 0.625rem + 8px);
+  margin: -4px;
+  overflow: hidden;
+  padding: 4px;
+}
+
 .animate-job-pop {
   animation: jobPop 0.62s cubic-bezier(0.2, 0.85, 0.25, 1);
 }

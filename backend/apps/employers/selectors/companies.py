@@ -53,6 +53,23 @@ def legally_represented_companies_queryset():
     ).filter(_has_eligible_representative=True)
 
 
+def email_sender_company_name(company_public_id):
+    """Tên công ty đứng tên email gửi ứng viên; rỗng khi không có người đại diện hợp pháp.
+
+    Công ty chưa xác thực (hoặc đã bị thu hồi xác thực) không được mượn tên
+    người gửi: ai cũng tạo được công ty mang tên một ngân hàng.
+    """
+    if not company_public_id:
+        return ''
+    return (
+        legally_represented_companies_queryset()
+        .filter(public_id=company_public_id)
+        .values_list('company_name', flat=True)
+        .first()
+        or ''
+    )
+
+
 def public_company_projection(queryset):
     return queryset.only(*PUBLIC_COMPANY_FIELDS).prefetch_related('industries')
 

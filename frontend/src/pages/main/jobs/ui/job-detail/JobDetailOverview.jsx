@@ -3,7 +3,6 @@ import {
   HeartFilled,
   HeartOutlined,
   SendOutlined,
-  ShareAltOutlined,
   ThunderboltFilled,
 } from '@ant-design/icons'
 import { Skeleton } from 'antd'
@@ -21,6 +20,7 @@ import {
 import { JobCompareButton } from '@/features/main/job/compare-jobs'
 import { formatFlashBadgeStats, formatJobDate, isAcceptingApplications } from '../../lib/job-detail-presentation'
 import JobApplicationClosed from './JobApplicationClosed'
+import JobShareButton from './JobShareButton'
 import { getIntlLocale } from '@/shared/config/i18n'
 
 const EMPTY_LABEL = 'Chưa cập nhật'
@@ -45,7 +45,7 @@ export function JobBreadcrumbs({ job }) {
   )
 }
 
-export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShare, savePending }) {
+export function JobHero({ job, saved, applicationStatus, onApply, onSave, savePending }) {
   const locations = job.locations_detail?.map((location) => location.name).join(' · ') || EMPTY_LABEL
   const deadline = formatDeadline(job.deadline)
   const experience = EXPERIENCE_YEARS_LABELS[job.experience_years] || EMPTY_LABEL
@@ -80,7 +80,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
           </h1>
           {job.company_name && <p className="job-hero__company">{job.company_name}</p>}
         </div>
-        <button type="button" onClick={onShare} className="job-hero__share" aria-label="Chia sẻ việc làm" title="Sao chép liên kết để chia sẻ"><ShareAltOutlined /></button>
+        <JobShareButton job={job} />
       </div>
 
       <p className="job-hero__salary" aria-label={`Mức lương: ${salary}${salaryNote ? `, ${salaryNote}` : ''}`}>

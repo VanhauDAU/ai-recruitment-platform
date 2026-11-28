@@ -1,0 +1,672 @@
+/* Cuốn sách mẫu CV trang chủ (CvFlipBook, chunk lazy của trang chủ).
+   - Mọi cỡ màn hình: sách mở hai trang, gáy ở giữa, thu nhỏ theo bề ngang khung.
+   - Lá sách (.cv-book__leaf) chỉ dựng khi đang lật: xoay liền một mạch quanh gáy (một đường
+     cong tốc độ, không có mốc giữa nên không khựng), nhấc lên là hiệu ứng riêng. Lá liền một
+     tấm hai mặt (.cv-book__face) với dải sáng chạy ngang mặt trang gợi độ cong. Máy có chuột
+     (pointer: fine) dùng lá chia 4 dải lồng nhau (.cv-book__strip) uốn cong thật; màn cảm
+     ứng không dùng vì Safari iOS lộ sọc tối/sáng nhấp nháy giữa các dải.
+   - Cỡ chữ trong trang theo bề rộng trang (container query, đơn vị cqw).
+   - Bóng tối/sáng trên lá sách và bóng đổ lên trang bên dưới chạy cùng nhịp lật. */
+
+.cv-book-stage {
+  --book-ease: cubic-bezier(0.45, 0.05, 0.2, 1);
+  /* Nhấc nhẹ, tăng tốc qua giữa rồi hạ êm: một đoạn duy nhất cho cả vòng lật. */
+  --turn-ease: cubic-bezier(0.32, 0.04, 0.2, 1);
+  --turn-ms: 1300ms;
+  --paper: #fffdf8;
+  --paper-edge: #ddd5c6;
+  margin-inline: auto;
+  perspective: 2200px;
+  width: min(100%, 600px);
+}
+
+.cv-book {
+  aspect-ratio: 3 / 2;
+  position: relative;
+  touch-action: pan-y;
+  transform: rotateX(9deg);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  transition: translate var(--turn-ms) var(--turn-ease);
+  user-select: none;
+}
+
+/* Sách đóng chỉ có nửa phải (bìa): dời sang trái một phần tư để bìa nằm giữa khung; mở
+   hoặc gập sách thì trượt cùng nhịp lá bìa đang lật. */
+.cv-book[data-closed] {
+  translate: -25% 0;
+}
+
+/* Điện thoại: sách nhỏ hơn nên nghiêng ít hơn để trang không bị bóp ở mép xa. */
+@media (max-width: 639.98px) {
+  .cv-book {
+    transform: rotateX(6deg);
+  }
+}
+
+/* Bóng của cuốn sách in xuống "mặt bàn". */
+.cv-book::after {
+  background: radial-gradient(closest-side, rgb(2 44 34 / 0.3), transparent);
+  bottom: -30px;
+  content: '';
+  filter: blur(6px);
+  height: 40px;
+  left: 3%;
+  pointer-events: none;
+  position: absolute;
+  right: 3%;
+  transform: translateZ(-2px);
+  transition: left var(--turn-ms) var(--turn-ease);
+}
+
+.cv-book[data-closed]::after {
+  left: 52%;
+}
+
+.cv-book__page,
+.cv-book__face,
+.cv-book__slice-page {
+  background: var(--paper);
+  bottom: 0;
+  container-type: inline-size;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+}
+
+.cv-book__page {
+  width: 50%;
+}
+
+.cv-book__page--left {
+  border-radius: 6px 2px 2px 6px;
+  left: 0;
+  /* Mép các trang đã đọc xếp lớp ở cạnh ngoài. */
+  box-shadow:
+    -1px 0 0 var(--paper-edge),
+    -3px 1px 0 var(--paper),
+    -4px 1px 0 var(--paper-edge),
+    -6px 2px 0 var(--paper),
+    -7px 2px 0 var(--paper-edge),
+    0 22px 34px -16px rgb(2 44 34 / 0.4);
+}
+
+.cv-book__page--right {
+  border-radius: 2px 6px 6px 2px;
+  right: 0;
+  box-shadow:
+    1px 0 0 var(--paper-edge),
+    3px 1px 0 var(--paper),
+    4px 1px 0 var(--paper-edge),
+    6px 2px 0 var(--paper),
+    7px 2px 0 var(--paper-edge),
+    0 22px 34px -16px rgb(2 44 34 / 0.4);
+}
+
+/* Gáy sách: trang tối dần về phía nếp gấp (cả phần trang trên lá đang lật). */
+.cv-book__page::after,
+.cv-book__face::after,
+.cv-book__slice-page::after {
+  content: '';
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 3;
+}
+
+.cv-book__page--left::after,
+.cv-book__leaf--next .cv-book__face--back::after,
+.cv-book__leaf--prev .cv-book__face--front::after,
+.cv-book__leaf--next .cv-book__slice--back .cv-book__slice-page::after,
+.cv-book__leaf--prev .cv-book__slice--front .cv-book__slice-page::after {
+  background: linear-gradient(to left, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.04) 6%, transparent 16%);
+}
+
+.cv-book__page--right::after,
+.cv-book__leaf--next .cv-book__face--front::after,
+.cv-book__leaf--prev .cv-book__face--back::after,
+.cv-book__leaf--next .cv-book__slice--front .cv-book__slice-page::after,
+.cv-book__leaf--prev .cv-book__slice--back .cv-book__slice-page::after {
+  background: linear-gradient(to right, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.04) 6%, transparent 16%);
+}
+
+/* ── Nội dung một trang ── */
+.cv-book__sheet {
+  color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  padding: 9cqw 10cqw;
+  position: absolute;
+}
+
+.cv-book__sheet--cv {
+  cursor: pointer;
+  padding: 5cqw 7cqw 0;
+}
+
+.cv-book__sheet--cv > div:first-child {
+  border-radius: 3px;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.12);
+}
+
+.cv-book__caption {
+  align-items: center;
+  bottom: 3.6cqw;
+  display: flex;
+  gap: 2.4cqw;
+  left: 7cqw;
+  position: absolute;
+  right: 16cqw;
+}
+
+.cv-book__name {
+  font-size: max(11px, 4.4cqw);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.cv-book__sheet--cv:hover .cv-book__name {
+  color: var(--brand-primary);
+}
+
+.cv-book__premium {
+  background: #f59e0b;
+  border-radius: 999px;
+  color: #fff;
+  flex-shrink: 0;
+  font-size: max(8px, 2.8cqw);
+  font-weight: 800;
+  padding: 0.4cqw 2cqw;
+}
+
+.cv-book__folio {
+  bottom: 3.8cqw;
+  color: #94a3b8;
+  font-size: max(9px, 3.4cqw);
+  font-variant-numeric: tabular-nums;
+  position: absolute;
+  right: 7cqw;
+}
+
+/* Bìa cứng: nền xanh thương hiệu, khung chỉ nổi, gáy tối hơn như phần bọc bìa. */
+.cv-book__sheet--cover {
+  background:
+    linear-gradient(to right, rgb(0 0 0 / 0.28), rgb(0 0 0 / 0.06) 7%, transparent 12%),
+    radial-gradient(120% 80% at 85% 10%, rgb(255 255 255 / 0.12), transparent 60%),
+    linear-gradient(160deg, var(--brand-primary-hover), var(--brand-surface-dark, #0b3b2a));
+  color: #fff;
+  justify-content: center;
+  padding-left: 14cqw;
+}
+
+.cv-book__cover-frame {
+  border: 1px solid rgb(255 255 255 / 0.35);
+  border-radius: 2px;
+  inset: 6cqw 6cqw 6cqw 9cqw;
+  pointer-events: none;
+  position: absolute;
+}
+
+.cv-book__cover-title {
+  font-size: 13cqw;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.cv-book__cover-edition {
+  color: rgb(255 255 255 / 0.78);
+  font-size: max(10px, 4.2cqw);
+  margin: 5cqw 0 0;
+}
+
+/* Trang lót (mặt trong bìa): tên sổ tay và lời dẫn lật trang. */
+.cv-book__sheet--intro {
+  background:
+    radial-gradient(90% 60% at 100% 100%, color-mix(in srgb, var(--brand-primary) 14%, transparent), transparent 70%),
+    var(--paper);
+  justify-content: center;
+}
+
+.cv-book__mark {
+  background: var(--brand-primary);
+  border-radius: 2px;
+  height: 1.4cqw;
+  width: 16cqw;
+}
+
+.cv-book__intro-title {
+  font-size: 12.5cqw;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  margin: 6cqw 0 0;
+  text-wrap: balance;
+}
+
+.cv-book__cover-lead {
+  color: #475569;
+  font-size: max(11px, 4.6cqw);
+  line-height: 1.5;
+  margin: 5cqw 0 0;
+}
+
+.cv-book__cover-hint {
+  align-items: center;
+  bottom: 8cqw;
+  color: var(--brand-primary-hover);
+  display: inline-flex;
+  font-size: max(10px, 3.8cqw);
+  font-weight: 700;
+  gap: 1.6cqw;
+  position: absolute;
+}
+
+.cv-book__cover-hint--light {
+  bottom: 11cqw;
+  color: rgb(255 255 255 / 0.85);
+}
+
+/* Sách đóng: cả bìa là nút mở. */
+.cv-book__open {
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
+  inset: 0;
+  position: absolute;
+  z-index: 5;
+}
+
+.cv-book__open:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -6px;
+}
+
+.cv-book__sheet--end {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.cv-book__end-title {
+  font-size: 8cqw;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.cv-book__end-lead {
+  color: #475569;
+  font-size: max(11px, 4.4cqw);
+  line-height: 1.5;
+  margin: 4cqw 0 0;
+}
+
+.cv-book__end-cta {
+  align-items: center;
+  background: var(--brand-primary) !important;
+  border-radius: 999px;
+  color: #fff !important;
+  display: inline-flex;
+  font-size: max(11px, 4.2cqw);
+  font-weight: 700;
+  gap: 2cqw;
+  margin-top: 7cqw;
+  padding: 2.8cqw 5.5cqw;
+  transition: background-color 0.2s;
+}
+
+.cv-book__end-cta:hover {
+  background: var(--brand-primary-hover) !important;
+}
+
+/* Giấy có dòng kẻ mờ cho trang trắng cuối sách. */
+.cv-book__sheet--blank {
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 7cqw, #efe9dc 7cqw calc(7cqw + 1px)),
+    var(--paper);
+  background-origin: content-box;
+}
+
+/* ── Lá sách đang lật ── */
+.cv-book__leaf {
+  animation:
+    cv-book-turn-next var(--turn-ms) var(--turn-ease) both,
+    cv-book-lift var(--turn-ms) ease-in-out both;
+  bottom: 0;
+  position: absolute;
+  top: 0;
+  transform-style: preserve-3d;
+  width: 50%;
+}
+
+.cv-book__leaf--next {
+  right: 0;
+  transform-origin: left center;
+}
+
+.cv-book__leaf--prev {
+  animation-name: cv-book-turn-prev, cv-book-lift;
+  left: 0;
+  transform-origin: right center;
+}
+
+.cv-book__face {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  inset: 0;
+}
+
+.cv-book__face--back {
+  transform: rotateY(180deg);
+}
+
+/* Mặt trước tối dần khi dựng lên, mặt sau sáng dần khi hạ xuống; một dải sáng chạy ngang mặt
+   trang trong lúc lật như ánh đèn trượt trên tờ giấy đang cong. */
+.cv-book__face::before {
+  background-repeat: no-repeat;
+  background-size: 260% 100%, 100% 100%;
+  content: '';
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+}
+
+.cv-book__face--front::before {
+  animation:
+    cv-book-shade-rise var(--turn-ms) var(--turn-ease) both,
+    cv-book-sheen var(--turn-ms) var(--turn-ease) both;
+}
+
+.cv-book__face--back::before {
+  animation:
+    cv-book-shade-fall var(--turn-ms) var(--turn-ease) both,
+    cv-book-sheen var(--turn-ms) var(--turn-ease) both reverse;
+}
+
+.cv-book__leaf--next .cv-book__face--front::before,
+.cv-book__leaf--prev .cv-book__face--back::before {
+  background-image:
+    linear-gradient(100deg, transparent 38%, rgb(255 255 255 / 0.32) 50%, transparent 62%),
+    linear-gradient(to right, rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.28));
+}
+
+.cv-book__leaf--next .cv-book__face--back::before,
+.cv-book__leaf--prev .cv-book__face--front::before {
+  background-image:
+    linear-gradient(80deg, transparent 38%, rgb(255 255 255 / 0.32) 50%, transparent 62%),
+    linear-gradient(to left, rgb(0 0 0 / 0.24), rgb(0 0 0 / 0.04));
+}
+
+/* ── Lá cong 4 dải (chỉ máy có chuột) ── */
+/* Dải 0 nằm sát gáy; mỗi dải sau lồng trong dải trước, nối ở mép xa gáy. */
+.cv-book__strip {
+  bottom: 0;
+  position: absolute;
+  top: 0;
+  transform-style: preserve-3d;
+  width: 25%;
+}
+
+.cv-book__strip .cv-book__strip {
+  animation: cv-book-bend-next var(--turn-ms) cubic-bezier(0.45, 0, 0.55, 1) both;
+  width: 100%;
+}
+
+.cv-book__leaf--next .cv-book__strip {
+  left: 0;
+  transform-origin: left center;
+}
+
+.cv-book__leaf--next .cv-book__strip .cv-book__strip {
+  left: 100%;
+}
+
+.cv-book__leaf--prev .cv-book__strip {
+  right: 0;
+  transform-origin: right center;
+}
+
+.cv-book__leaf--prev .cv-book__strip .cv-book__strip {
+  animation-name: cv-book-bend-prev;
+  right: 100%;
+}
+
+/* Mỗi mặt của dải chỉ lộ phần trang của mình; nội dung tràn 0,5px sang dải bên để không
+   hở khe khử răng cưa giữa các dải khi cong. */
+.cv-book__slice {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  inset: 0 -0.5px;
+  overflow: hidden;
+  position: absolute;
+}
+
+.cv-book__slice--back {
+  transform: rotateY(180deg);
+}
+
+.cv-book__slice-page {
+  left: calc(var(--slice) * -100%);
+  width: 400%;
+}
+
+/* Mặt trước tối dần khi dựng lên, mặt sau sáng dần khi hạ xuống, đậm dần về mép ngoài
+   đang cong lên. Lớp bóng chỉ chồng 0,25px sang dải bên (nội dung chồng 0,5px): đủ khép mép
+   mà không tô đậm thành vạch; dùng chung một dải màu chuyển rộng 4 dải, dịch theo --slice
+   nên liền mạch qua các dải. */
+.cv-book__slice::before {
+  background-position: calc(var(--slice) / 3 * 100%) 0;
+  background-size: 400% 100%;
+  content: '';
+  inset: 0 0.25px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+}
+
+.cv-book__slice--front::before {
+  animation: cv-book-shade-rise var(--turn-ms) var(--turn-ease) both;
+}
+
+.cv-book__slice--back::before {
+  animation: cv-book-shade-fall var(--turn-ms) var(--turn-ease) both;
+}
+
+.cv-book__leaf--next .cv-book__slice--front::before,
+.cv-book__leaf--prev .cv-book__slice--back::before {
+  background-image: linear-gradient(to right, rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.3));
+}
+
+.cv-book__leaf--next .cv-book__slice--back::before,
+.cv-book__leaf--prev .cv-book__slice--front::before {
+  background-image: linear-gradient(to left, rgb(0 0 0 / 0.26), rgb(0 0 0 / 0.04));
+}
+
+/* Bóng lá sách đổ lên trang bên dưới. */
+.cv-book[data-turning='next'] .cv-book__page--right::before,
+.cv-book[data-turning='prev'] .cv-book__page--left::before {
+  animation: cv-book-cast var(--turn-ms) var(--book-ease) both;
+  content: '';
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+
+.cv-book[data-turning='next'] .cv-book__page--right::before {
+  background: linear-gradient(to right, rgb(0 0 0 / 0.28), transparent 65%);
+}
+
+.cv-book[data-turning='prev'] .cv-book__page--left::before {
+  background: linear-gradient(to left, rgb(0 0 0 / 0.28), transparent 65%);
+}
+
+@keyframes cv-book-turn-next {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(-180deg); }
+}
+
+@keyframes cv-book-turn-prev {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(180deg); }
+}
+
+/* Nhấc lá sách khỏi mặt trang rồi đặt xuống; 1px ở hai đầu để không lẫn với trang dưới. */
+@keyframes cv-book-lift {
+  0%, 100% { translate: 0 0 1px; }
+  50% { translate: 0 0 24px; }
+}
+
+/* Giấy uốn: mép ngoài đi trước khi nhấc lên, trễ lại khi hạ xuống, phẳng khi chạm trang. */
+@keyframes cv-book-bend-next {
+  0%, 100% { transform: rotateY(0deg); }
+  30% { transform: rotateY(-13deg); }
+  68% { transform: rotateY(9deg); }
+}
+
+@keyframes cv-book-bend-prev {
+  0%, 100% { transform: rotateY(0deg); }
+  30% { transform: rotateY(13deg); }
+  68% { transform: rotateY(-9deg); }
+}
+
+@keyframes cv-book-sheen {
+  from { background-position: 100% 0, 0 0; }
+  to { background-position: 0% 0, 0 0; }
+}
+
+@keyframes cv-book-shade-rise {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@keyframes cv-book-shade-fall {
+  0% { opacity: 1; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes cv-book-cast {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Sách mở ra khi khối trồi lên (HomeSection). */
+@media (prefers-reduced-motion: no-preference) {
+  .home-reveal.is-revealed .cv-book {
+    animation: cv-book-in 1.1s var(--book-ease) 0.15s backwards;
+  }
+}
+
+@keyframes cv-book-in {
+  from {
+    opacity: 0;
+    transform: rotateX(34deg) translateY(40px) scale(0.94);
+  }
+}
+
+/* ── Thanh điều khiển kiểu trình đọc sách ── */
+.cv-book__bar {
+  align-items: center;
+  backdrop-filter: blur(6px);
+  background: rgb(255 255 255 / 0.85);
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px -12px rgb(2 44 34 / 0.35);
+  display: flex;
+  gap: 6px;
+  margin: 30px auto 0;
+  padding: 4px 6px;
+  width: min(100%, 440px);
+}
+
+.cv-book__button {
+  align-items: center;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 13px;
+  height: 32px;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+  width: 32px;
+}
+
+.cv-book__button:hover:not(:disabled) {
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+}
+
+.cv-book__button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.cv-book__button:focus-visible,
+.cv-book__range:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.cv-book__range {
+  appearance: none;
+  background:
+    linear-gradient(var(--brand-primary), var(--brand-primary)) 0 / var(--progress, 0%) 100% no-repeat,
+    #e2e8f0;
+  border-radius: 999px;
+  cursor: pointer;
+  flex: 1;
+  height: 4px;
+  min-width: 0;
+}
+
+.cv-book__range::-webkit-slider-thumb {
+  appearance: none;
+  background: #fff;
+  border: 2px solid var(--brand-primary);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgb(2 44 34 / 0.25);
+  height: 14px;
+  width: 14px;
+}
+
+.cv-book__range::-moz-range-thumb {
+  background: #fff;
+  border: 2px solid var(--brand-primary);
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+}
+
+.cv-book__count {
+  color: #475569;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  min-width: 70px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Điện thoại: lật bằng vuốt và tự lật, không cần thanh điều khiển. */
+@media (max-width: 639.98px) {
+  .cv-book__bar {
+    display: none;
+  }
+}

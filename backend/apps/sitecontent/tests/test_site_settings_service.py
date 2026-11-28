@@ -54,6 +54,24 @@ class SiteSettingsServiceTests(TestCase):
         self.assertEqual(result.updated, ['test_tagline'])
         self.assertFalse(AdminAccessAuditLog.objects.filter(action='site_setting_update').exists())
 
+    def test_pattern_option_rejects_malformed_values_but_allows_blank(self):
+        SiteSetting.objects.create(
+            key='test_ga', label='GA', value='', options={'pattern': '^G-[A-Z0-9]{4,16}$'}
+        )
+
+        result = update_site_settings(
+            actor=self.actor, values={'test_ga': 'UA-12345-1'}, image_uploads={}
+        )
+        self.assertIn('test_ga', result.errors)
+
+        result = update_site_settings(actor=self.actor, values={'test_ga': ''}, image_uploads={})
+        self.assertEqual(result.updated, ['test_ga'])
+
+        result = update_site_settings(
+            actor=self.actor, values={'test_ga': 'G-AB12CD34EF'}, image_uploads={}
+        )
+        self.assertEqual(result.values, {'test_ga': 'G-AB12CD34EF'})
+
     def test_public_values_are_cached_and_exclude_private_settings(self):
         values = public_setting_values()
 

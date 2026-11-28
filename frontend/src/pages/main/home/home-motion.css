@@ -1,0 +1,143 @@
+/* Chuyển động trang chủ ứng viên. Nằm trong chunk lazy của Home nên không làm
+   phình CSS khởi tạo. Nguyên tắc:
+   - Chỉ animate opacity + translate/scale (chạy trên compositor, không reflow).
+   - Dùng thuộc tính riêng `translate`/`scale` và fill `backwards`: hết hiệu ứng
+     phần tử trả về transform của chính nó (thẻ CV xòe quạt, hover nâng thẻ).
+   - Tiêu đề H1 và banner (ứng viên LCP) không bị làm mờ lúc tải.
+   - prefers-reduced-motion: hiện ngay, không chuyển động. */
+
+.home-motion {
+  --home-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --home-rise: 28px;
+}
+
+@media (max-width: 767px) {
+  .home-motion {
+    --home-rise: 16px;
+  }
+}
+
+/* ── Màn đầu: các lớp hero lần lượt trồi lên khi trang vừa tải ── */
+.home-motion [data-enter] {
+  animation: home-enter 0.8s var(--home-ease) backwards;
+  animation-delay: calc(var(--d, 0) * 90ms + 60ms);
+}
+
+.home-motion [data-enter='1'] { --d: 1; }
+.home-motion [data-enter='2'] { --d: 2; }
+.home-motion [data-enter='3'] { --d: 3; }
+.home-motion [data-enter='4'] { --d: 4; }
+.home-motion [data-enter='lcp'] { --d: 4; animation-name: home-enter-rise; }
+
+@keyframes home-enter {
+  from {
+    opacity: 0;
+    translate: 0 var(--home-rise);
+    scale: 0.985;
+  }
+}
+
+/* Khối chứa banner (có thể là LCP): chỉ trượt lên, không mờ dần. */
+@keyframes home-enter-rise {
+  from {
+    translate: 0 var(--home-rise);
+  }
+}
+
+/* ── Khối dưới màn đầu: trồi lên khi cuộn tới (HomeSection) ── */
+.home-reveal:not(.is-revealed) {
+  opacity: 0;
+  translate: 0 var(--home-rise);
+}
+
+.home-reveal.is-revealed {
+  animation: home-reveal 0.9s var(--home-ease) backwards;
+}
+
+@keyframes home-reveal {
+  from {
+    opacity: 0;
+    translate: 0 var(--home-rise);
+  }
+}
+
+/* Thẻ trong lưới xuất hiện so le sau khi khối đã trồi lên. */
+.home-reveal:not(.is-revealed) [data-reveal-stagger] > * {
+  opacity: 0;
+}
+
+.home-reveal.is-revealed [data-reveal-stagger] > * {
+  animation: home-stagger 0.7s var(--home-ease) backwards;
+  animation-delay: calc(var(--n, 0) * 70ms + 180ms);
+}
+
+[data-reveal-stagger] > :nth-child(2) { --n: 1; }
+[data-reveal-stagger] > :nth-child(3) { --n: 2; }
+[data-reveal-stagger] > :nth-child(4) { --n: 3; }
+[data-reveal-stagger] > :nth-child(5) { --n: 4; }
+[data-reveal-stagger] > :nth-child(6) { --n: 5; }
+[data-reveal-stagger] > :nth-child(7) { --n: 6; }
+[data-reveal-stagger] > :nth-child(n + 8) { --n: 7; }
+
+@keyframes home-stagger {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--home-rise) * 0.75);
+    scale: 0.96;
+  }
+}
+
+/* ── Thanh tiến độ cuộn: chạy hoàn toàn bằng CSS (scroll-driven), không JS ── */
+.home-scroll-progress {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .home-scroll-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 51;
+    display: block;
+    height: 3px;
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--brand-primary), #3ddc84 55%, #fbbf24);
+    transform-origin: 0 50%;
+    animation: home-scroll-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+
+  /* Lớp trang trí trôi chậm hơn nội dung (parallax) khi khối đi qua khung nhìn. */
+  .home-parallax {
+    animation: home-parallax linear both;
+    animation-timeline: view();
+  }
+
+  .home-parallax--reverse {
+    animation-direction: reverse;
+  }
+}
+
+@keyframes home-scroll-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes home-parallax {
+  from { translate: 0 -48px; }
+  to { translate: 0 48px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-motion [data-enter],
+  .home-reveal.is-revealed,
+  .home-reveal.is-revealed [data-reveal-stagger] > *,
+  .home-parallax {
+    animation: none;
+  }
+
+  .home-reveal:not(.is-revealed),
+  .home-reveal:not(.is-revealed) [data-reveal-stagger] > * {
+    opacity: 1;
+    translate: none;
+  }
+}

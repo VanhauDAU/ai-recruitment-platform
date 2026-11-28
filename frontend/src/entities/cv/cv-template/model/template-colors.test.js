@@ -17,6 +17,11 @@ describe('CV template colors', () => {
     expect(templatePreviewForColor(template, colors[1])).toBe('/blue.png')
   })
 
+  it('prefers the light 600px thumbnail over the 1200px preview for cards', () => {
+    const color = { slug: 'green', thumbnail_url: '/green-thumb.webp', preview_url: '/green-preview.webp' }
+    expect(templatePreviewForColor({}, color)).toBe('/green-thumb.webp')
+  })
+
   it('falls back to the brand color when a template has no colors', () => {
     expect(templateColors({ colors: [] })).toEqual([
       expect.objectContaining({ hex_code: '#00A66A', is_default: true, preview_url: '' }),

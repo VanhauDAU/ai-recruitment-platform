@@ -1,19 +1,12 @@
 import { FacebookFilled, LinkedinFilled, LinkOutlined, TwitterOutlined } from '@ant-design/icons'
 import { m } from '@/shared/config/i18n'
+import { buildShareLinks, openShareWindow } from '@/shared/lib/share-links'
 import { message } from '@/shared/lib/toast'
-
-function shareUrl(network) {
-  const url = encodeURIComponent(window.location.href)
-  const title = encodeURIComponent(document.title)
-  if (network === 'facebook') return `https://www.facebook.com/sharer/sharer.php?u=${url}`
-  if (network === 'twitter') return `https://twitter.com/intent/tweet?url=${url}&text=${title}`
-  return `https://www.linkedin.com/sharing/share-offsite/?url=${url}`
-}
 
 /** Nút chia sẻ trang hiện tại; container của nơi dùng quyết định bố cục dọc hay ngang. */
 export default function ShareButtons({ copiedMessage = m.ui_share_link_copied() }) {
   function share(network) {
-    window.open(shareUrl(network), '_blank', 'noopener,noreferrer,width=640,height=520')
+    openShareWindow(buildShareLinks({ url: window.location.href, title: document.title })[network])
   }
 
   async function copyLink() {
