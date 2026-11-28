@@ -29,7 +29,7 @@ from .notification_events import EVENTS, render_text, switch_enabled
 
 logger = logging.getLogger(__name__)
 
-SAFE_METADATA_KEYS = {'application_public_id', 'job_public_id'}
+SAFE_METADATA_KEYS = {'application_public_id', 'company_public_id', 'job_public_id'}
 # Notices due sooner than this get their own timed release (the undo window);
 # later ones (auto-rejection grace, days) are left to the beat dispatcher,
 # which also catches any timed release that was lost.
