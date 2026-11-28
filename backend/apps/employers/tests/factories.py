@@ -16,7 +16,7 @@ from pypdf import PdfWriter
 
 from apps.accounts.models import User
 from apps.accounts.services import issue_tokens
-from apps.jobs.models import Job, JobCategory
+from apps.jobs.models import Job
 
 from ..models import (
     Company,
@@ -25,7 +25,6 @@ from ..models import (
     EmployerDpaAcceptance,
     EmployerVerificationCase,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 
 PNG_BYTES = (
@@ -185,20 +184,6 @@ def make_employer_ready(user, *, company=None, candidate_data=False):
             'ip_address': '127.0.0.1',
         },
     )
-    category, _ = JobCategory.objects.get_or_create(
-        name=f'Readiness category {user.pk}',
-        defaults={'category_type': JobCategory.CategoryType.SPECIALIZATION},
-    )
-    if not recruiter.recruitment_needs.exists():
-        RecruitmentNeed.objects.create(
-            recruiter=recruiter,
-            position_category=category,
-            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-            is_continuous=True,
-            headcount=1,
-            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-            completed_at=timezone.now(),
-        )
     verification_case, _ = EmployerVerificationCase.objects.get_or_create(
         recruiter=recruiter,
         defaults={'company': company},

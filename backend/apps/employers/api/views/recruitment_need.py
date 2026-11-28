@@ -1,4 +1,3 @@
-from django.db import IntegrityError
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
@@ -10,60 +9,14 @@ from apps.accounts.api.permissions import IsEmployer
 
 from ...selectors import (
     existing_recruiter_profile,
-    first_recruitment_need,
     recruiter_recruitment_need,
     recruiter_recruitment_needs,
 )
 from ...services import (
-    InitialRecruitmentNeedAlreadyExists,
-    create_initial_recruitment_need,
     create_recruitment_need,
     get_or_create_recruiter,
 )
 from ..serializers import RecruitmentNeedSerializer
-
-
-class RecruitmentNeedView(APIView):
-    permission_classes = [IsEmployer]
-
-    @extend_schema(
-        summary='Đọc nhu cầu tuyển dụng ưu tiên trong onboarding',
-        responses={200: RecruitmentNeedSerializer},
-        tags=['employer-auth'],
-    )
-    def get(self, request):
-        recruiter = existing_recruiter_profile(request.user)
-        need = first_recruitment_need(recruiter) if recruiter else None
-        return Response(RecruitmentNeedSerializer(need).data if need else None)
-
-    @extend_schema(
-        summary='Hoàn tất khảo sát nhu cầu tuyển dụng sau xác thực email',
-        request=RecruitmentNeedSerializer,
-        responses={200: RecruitmentNeedSerializer},
-        tags=['employer-auth'],
-    )
-    def post(self, request):
-        recruiter = get_or_create_recruiter(request.user)
-        if not request.user.email_verified:
-            raise ValidationError(
-                {'detail': _('Vui lòng xác thực email trước khi khai báo nhu cầu tuyển dụng.')}
-            )
-        if recruiter.registration_completed_at is None:
-            raise ValidationError({'detail': _('Vui lòng hoàn tất hồ sơ nhà tuyển dụng trước.')})
-        if recruiter.recruitment_needs.exists():
-            raise ValidationError({'detail': _('Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.')})
-        serializer = RecruitmentNeedSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        try:
-            need = create_initial_recruitment_need(
-                recruiter=recruiter,
-                validated_data=serializer.validated_data,
-            )
-        except (InitialRecruitmentNeedAlreadyExists, IntegrityError) as error:
-            raise ValidationError(
-                {'detail': _('Bạn đã hoàn tất khai báo nhu cầu tuyển dụng.')}
-            ) from error
-        return Response(RecruitmentNeedSerializer(need).data, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(

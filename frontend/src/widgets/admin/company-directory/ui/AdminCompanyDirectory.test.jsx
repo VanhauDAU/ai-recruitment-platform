@@ -242,7 +242,7 @@ describe('admin company directory', () => {
     expect(within(row).getByLabelText('Ảnh đại diện Owner chính')).toHaveTextContent('OC')
     expect(within(row).getByText('Đã xác thực')).toBeInTheDocument()
     expect(within(row.closest('.ant-table')).getByRole('columnheader', { name: 'Thiết lập ban đầu' })).toBeInTheDocument()
-    expect(screen.getByText('Đã đủ hồ sơ, email và nhu cầu')).toBeInTheDocument()
+    expect(screen.getByText('Đã đủ hồ sơ và email')).toBeInTheDocument()
     await waitFor(() => expect(getAdminCompanyRecruiters).toHaveBeenCalled())
 
     // Text, not role: a role query walks the computed style of every ancestor

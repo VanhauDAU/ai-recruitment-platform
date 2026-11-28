@@ -187,10 +187,7 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
         return obj.verified_phone or obj.contact_phone or ''
 
     def get_initial_onboarding(self, obj) -> dict:
-        return build_employer_initial_onboarding(
-            obj,
-            has_recruitment_need=getattr(obj, '_has_recruitment_need', False),
-        )
+        return build_employer_initial_onboarding(obj)
 
     def get_verification(self, obj) -> dict:
         case = getattr(obj, 'verification_case', None)

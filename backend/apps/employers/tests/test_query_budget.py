@@ -475,13 +475,6 @@ class RecruitmentNeedQueryBudgetTests(APITestCase):
             )
         self.client.force_authenticate(self.user)
 
-    def test_onboarding_need_query_count_stays_flat(self):
-        with self.assertNumQueries(RECRUITMENT_NEED_READ_BUDGET):
-            response = self.client.get(reverse('employer-consulting-need'))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['position_category_name'], 'Recruitment need budget')
-
     def test_recruitment_need_list_query_count_stays_flat(self):
         with self.assertNumQueries(RECRUITMENT_NEED_READ_BUDGET):
             response = self.client.get(reverse('employer-recruitment-needs'))

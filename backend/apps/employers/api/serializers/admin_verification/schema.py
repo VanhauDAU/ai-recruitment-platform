@@ -12,7 +12,6 @@ from ....models import CompanyTaxLookupEvidence, EmployerVerificationCase
 class AdminVerificationChecksSerializer(serializers.Serializer):
     email_verified = serializers.BooleanField()
     registration_completed = serializers.BooleanField()
-    consulting_need_completed = serializers.BooleanField()
     phone_verified = serializers.BooleanField()
     company_linked = serializers.BooleanField()
     representative_documents_submitted = serializers.BooleanField()

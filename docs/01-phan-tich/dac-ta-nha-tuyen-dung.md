@@ -32,8 +32,8 @@ Owner code: app `apps.employers` (model, service, selector, API
 ### 2.1 Luồng
 
 ```text
-Email:  register → /account/verify → bấm link → /consulting-need → /employer-verify → /dashboard
-Google: callback → /account/complete-profile → /consulting-need → /employer-verify → /dashboard
+Email:  register → /account/verify → bấm link → /employer-verify → /dashboard
+Google: callback → /account/complete-profile → /employer-verify → /dashboard
 ```
 
 `POST /api/employer/register/` chạy trong một transaction: tạo `User` role
@@ -61,20 +61,19 @@ phải đặt mật khẩu tại `/account/settings/password-login` trước khi
 ### 2.2 State machine onboarding
 
 Backend trả `employer_onboarding_step`; `employer_onboarding_required=false` chỉ
-ở `complete`. `EmployerOnboardingGuard` chặn direct navigation, và API khai báo
-nhu cầu cũng tự chặn khi email chưa xác thực.
+ở `complete`. `EmployerOnboardingGuard` chặn direct navigation.
 
 | Step | Điều kiện | Route |
 | --- | --- | --- |
 | `registration` | Thiếu hồ sơ người liên hệ | `/account/complete-profile` |
 | `email_verification` | Email chưa xác thực | `/account/verify` |
-| `consulting_need` | Chưa có nhu cầu tuyển dụng | `/consulting-need` |
-| `complete` | Có nhu cầu hợp lệ | `/employer-verify` nếu checklist chưa đủ, ngược lại `/dashboard` hoặc `returnUrl` an toàn |
+| `complete` | Đủ hồ sơ và email đã xác thực | `/employer-verify` nếu checklist chưa đủ, ngược lại `/dashboard` hoặc `returnUrl` an toàn |
 
-`POST /api/employer/consulting-need/` tạo đúng một lần (lần sau `400`); nhu cầu
-gồm vị trí, cấp bậc, hạn tuyển hoặc "liên tục", số lượng 1–10.000, ngân sách
-min/max tùy chọn (`max ≥ min`), nguồn ngân sách và chủ đề tư vấn. Các nhu cầu
-thêm sau quản lý ở `/api/employer/recruitment-needs/`.
+Nhu cầu tuyển dụng không còn là bước onboarding bắt buộc (bỏ 29/11/2026). NTD
+khai báo tùy chọn trong Cài đặt → Nhu cầu tuyển dụng
+(`/api/employer/recruitment-needs/`): vị trí, cấp bậc, hạn tuyển hoặc "liên
+tục", số lượng 1–10.000, ngân sách min/max tùy chọn (`max ≥ min`), nguồn ngân
+sách và chủ đề tư vấn.
 
 ### 2.3 Chống lạm dụng đăng nhập
 

@@ -1,7 +1,6 @@
 import {
   EMPLOYER_ACCOUNT_VERIFY_URL,
   EMPLOYER_COMPLETE_PROFILE_URL,
-  EMPLOYER_CONSULTING_NEED_URL,
   EMPLOYER_VERIFY_URL,
   HOME_BY_ROLE,
 } from '@/shared/config/portals'
@@ -16,7 +15,6 @@ export function getAuthDestination({ user, returnUrl }) {
       const destinations = {
         registration: EMPLOYER_COMPLETE_PROFILE_URL,
         email_verification: EMPLOYER_ACCOUNT_VERIFY_URL,
-        consulting_need: EMPLOYER_CONSULTING_NEED_URL,
       }
       return destinations[user.employer_onboarding_step] || EMPLOYER_ACCOUNT_VERIFY_URL
     }

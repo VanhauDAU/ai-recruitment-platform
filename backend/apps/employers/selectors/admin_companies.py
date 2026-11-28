@@ -21,7 +21,6 @@ from ..models import (
     CompanyUpdateRequest,
     EmployerVerificationCase,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 from ..models.representation import eligible_owners_queryset
 from .company_content_changes import unreviewed_content_change_count
@@ -213,16 +212,10 @@ def admin_company_recruiters_queryset(company, *, params=None):
         RecruiterProfile.objects.filter(company=company)
         .select_related('user', 'verification_case', 'work_location')
         .annotate(
-            _has_recruitment_need=Exists(
-                RecruitmentNeed.objects.filter(recruiter_id=OuterRef('pk'))
-            )
-        )
-        .annotate(
             initial_onboarding_completed=Case(
                 When(
                     registration_completed_at__isnull=False,
                     user__email_verified=True,
-                    _has_recruitment_need=True,
                     then=Value(True),
                 ),
                 default=Value(False),

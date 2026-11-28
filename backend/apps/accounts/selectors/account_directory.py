@@ -25,7 +25,6 @@ from apps.employers.models import (
     CompanyDocument,
     CompanyUpdateRequest,
     EmployerVerificationCase,
-    RecruitmentNeed,
 )
 from apps.sitecontent.selectors import moderation_sla_hours
 from common.api.params import parse_bool
@@ -49,18 +48,13 @@ ACCOUNT_SCOPES = frozenset({ACCOUNT_SCOPE_USERS, ACCOUNT_SCOPE_RECRUITERS})
 
 
 def _with_recruiter_initial_onboarding(queryset):
-    """Annotate the three-step employer setup state without per-row queries."""
+    """Annotate the two-step employer setup state without per-row queries."""
     return queryset.annotate(
-        _has_recruitment_need=Exists(
-            RecruitmentNeed.objects.filter(recruiter__user_id=OuterRef('pk'))
-        ),
-    ).annotate(
         recruiter_initial_onboarding_completed=Case(
             When(
                 role=User.Role.EMPLOYER,
                 recruiter_profile__registration_completed_at__isnull=False,
                 email_verified=True,
-                _has_recruitment_need=True,
                 then=Value(True),
             ),
             default=Value(False),
@@ -231,11 +225,6 @@ def accounts_queryset(actor, *, params=None):
                 'recruiter_profile__verification_case__documents',
                 queryset=CompanyDocument.objects.filter(is_current=True),
                 to_attr='current_documents_for_checks',
-            ),
-            Prefetch(
-                'recruiter_profile__recruitment_needs',
-                queryset=RecruitmentNeed.objects.only('id', 'recruiter_id'),
-                to_attr='verification_recruitment_needs',
             ),
         )
         .annotate(

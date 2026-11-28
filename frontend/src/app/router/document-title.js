@@ -55,7 +55,6 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/dat-lai-mat-khau'), m.employer_workspace_title_reset_password()],
   [employerAppPath('/xac-thuc-email'), m.employer_workspace_title_verify_email()],
   [employerAppPath('/hoan-thien-ho-so'), m.employer_workspace_title_complete_profile()],
-  [employerAppPath('/khai-bao-nhu-cau'), m.employer_workspace_title_recruitment_demand()],
   [employerAppPath('/xac-thuc-tai-khoan'), m.employer_workspace_title_account_verification()],
   [employerAppPath('/xac-thuc-so-dien-thoai'), m.employer_workspace_title_phone_verify()],
   [employerAppPath('/cai-dat/thong-tin-tai-khoan'), m.employer_workspace_title_account_info()],

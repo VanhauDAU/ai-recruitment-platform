@@ -322,16 +322,6 @@ export async function joinEmployerCompany(payload) {
   return data
 }
 
-export async function getEmployerRecruitmentNeed() {
-  const { data } = await api.get('/employer/consulting-need/')
-  return data
-}
-
-export async function saveEmployerRecruitmentNeed(payload) {
-  const { data } = await api.post('/employer/consulting-need/', payload)
-  return data
-}
-
 export async function getEmployerRecruitmentNeeds() {
   const { data } = await api.get('/employer/recruitment-needs/')
   return data?.results || data || []

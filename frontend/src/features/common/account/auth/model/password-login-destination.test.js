@@ -26,7 +26,6 @@ describe('authentication onboarding destination', () => {
   it.each([
     ['registration', '/tuyendung/app/hoan-thien-ho-so'],
     ['email_verification', '/tuyendung/app/xac-thuc-email'],
-    ['consulting_need', '/tuyendung/app/khai-bao-nhu-cau'],
   ])('sends an employer at %s to the matching setup route', (step, destination) => {
     expect(getAuthDestination({
       user: { role: 'employer', employer_onboarding_required: true, employer_onboarding_step: step },

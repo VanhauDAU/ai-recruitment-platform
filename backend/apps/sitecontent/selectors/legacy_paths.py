@@ -26,7 +26,6 @@ _EMPLOYER = {
     '/account/verify': '/xac-thuc-email',
     '/account/complete-profile': '/hoan-thien-ho-so',
     '/onboarding': '/hoan-thien-ho-so',
-    '/consulting-need': '/khai-bao-nhu-cau',
     '/employer-verify': '/xac-thuc-tai-khoan',
     '/account/phone-verify': '/xac-thuc-so-dien-thoai',
     '/account/settings': '/cai-dat',

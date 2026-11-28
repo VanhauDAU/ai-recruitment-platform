@@ -253,26 +253,15 @@ class AccountManagementG3ApiTests(TestCase):
             self.password,
             role=User.Role.EMPLOYER,
             status=User.Status.ACTIVE,
-            email_verified=True,
+            email_verified=False,
         )
-        complete = RecruiterProfile.objects.create(
+        RecruiterProfile.objects.create(
             user=complete_user,
             registration_completed_at=timezone.now(),
         )
         RecruiterProfile.objects.create(
             user=incomplete_user,
             registration_completed_at=timezone.now(),
-        )
-        category = JobCategory.objects.create(
-            name='Nhu cầu hoàn tất thiết lập',
-            category_type=JobCategory.CategoryType.SPECIALIZATION,
-        )
-        RecruitmentNeed.objects.create(
-            recruiter=complete,
-            position_category=category,
-            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-            completed_at=timezone.now(),
         )
         self.authenticate(self.superuser)
 
@@ -293,7 +282,7 @@ class AccountManagementG3ApiTests(TestCase):
         )
         self.assertEqual(
             incomplete['context']['initial_onboarding']['missing_steps'],
-            ['consulting_need_completed'],
+            ['email_verified'],
         )
 
     def test_banning_employer_holds_only_nonterminal_campaigns(self):

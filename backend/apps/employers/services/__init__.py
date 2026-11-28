@@ -146,8 +146,6 @@ from .profiles import (
     recruiter_readiness_state,
 )
 from .recruitment_needs import (
-    InitialRecruitmentNeedAlreadyExists,
-    create_initial_recruitment_need,
     create_recruitment_need,
 )
 from .tax_lookup import (
@@ -223,7 +221,6 @@ __all__ = [
     'DpaPolicyChanged',
     'DpaGraceConflict',
     'DpaPolicyUnavailable',
-    'InitialRecruitmentNeedAlreadyExists',
     'SENSITIVE_FIELDS',
     'ACTIVE_COMPANY_UPDATE_STATUSES',
     'PRE_REVIEW_COMPANY_UPDATE_STATUSES',
@@ -241,7 +238,6 @@ __all__ = [
     'company_update_conflicting_fields',
     'current_company_update_revision',
     'challenge_code_matches',
-    'create_initial_recruitment_need',
     'create_sms_phone_challenge',
     'DomainClaimError',
     'confirm_domain_claim_admin_action',
