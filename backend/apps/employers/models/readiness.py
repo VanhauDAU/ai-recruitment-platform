@@ -107,7 +107,6 @@ def employer_readiness_queryset():
     from .compliance import EmployerComplianceHold
     from .evidence import CompanyDocument
     from .membership import RecruiterProfile
-    from .recruitment_need import RecruitmentNeed
 
     owned_documents = (
         Q(
@@ -140,9 +139,6 @@ def employer_readiness_queryset():
         'company',
         'verification_case',
     ).annotate(
-        readiness_has_recruitment_need=Exists(
-            RecruitmentNeed.objects.filter(recruiter_id=OuterRef('pk'))
-        ),
         readiness_has_business_document=Exists(
             current_documents.filter(doc_type__in=business_types)
         ),
@@ -233,7 +229,7 @@ def evaluate_employer_readiness(
         (
             initial_onboarding_complete,
             'initial_onboarding_required',
-            _('Hoàn tất hồ sơ đăng ký, xác minh email và nhu cầu tuyển dụng.'),
+            _('Hoàn tất hồ sơ đăng ký và xác minh email.'),
             'complete_onboarding',
         ),
         (
@@ -391,9 +387,7 @@ def build_annotated_employer_readiness(recruiter, *, dpa_status=None):
             and not recruiter.user.is_deleted
         ),
         initial_onboarding_complete=bool(
-            recruiter.registration_completed_at is not None
-            and recruiter.user.email_verified
-            and recruiter.readiness_has_recruitment_need
+            recruiter.registration_completed_at is not None and recruiter.user.email_verified
         ),
         phone_verified=recruiter.has_verified_phone,
         company_linked=has_explicit_company_link(

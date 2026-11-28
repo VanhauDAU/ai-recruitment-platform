@@ -32,7 +32,7 @@ def build_employer_readiness(recruiter, *, onboarding=None, dpa_status=None):
     """Build the canonical readiness DTO from current employer records."""
     if recruiter is None:
         return missing_employer_readiness()
-    if hasattr(recruiter, 'readiness_has_recruitment_need'):
+    if hasattr(recruiter, 'readiness_has_business_document'):
         return build_annotated_employer_readiness(recruiter, dpa_status=dpa_status)
     onboarding = onboarding or build_employer_onboarding_steps(recruiter)
     try:

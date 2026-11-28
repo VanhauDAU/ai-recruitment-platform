@@ -23,7 +23,6 @@ import {
   EmployerCampaignListPage,
   EmployerConnectPage,
   EmployerContactPage,
-  EmployerConsultingNeedPage,
   EmployerDashboardPage,
   EmployerGeneralSettingsPage,
   EmployerIntegrationsPage,
@@ -78,11 +77,11 @@ export function employerRoutes() {
         path={employerAppPath('/xac-thuc-email')}
         element={(
           <VerifyEmailPage
-            homePath={employerAppPath('/khai-bao-nhu-cau')}
+            homePath={employerAppPath('/xac-thuc-tai-khoan')}
             loginPath={employerAppPath('/dang-nhap')}
             verificationPath={employerAppPath('/xac-thuc-email')}
-            successActionLabel="Tiếp tục khai báo nhu cầu tuyển dụng"
-            verifiedActionLabel="Khai báo nhu cầu tuyển dụng"
+            successActionLabel="Tiếp tục xác thực tài khoản"
+            verifiedActionLabel="Xác thực tài khoản"
           />
         )}
       />
@@ -103,9 +102,6 @@ export function employerRoutes() {
       <Route element={<RoleGuard allowedRoles={['employer']} loginPath={employerAppPath('/dang-nhap')} />}>
         <Route element={<EmployerAuthLayout />}>
           <Route path={employerAppPath('/hoan-thien-ho-so')} element={<EmployerOnboardingPage />} />
-        </Route>
-        <Route element={<EmployerSetupLayout />}>
-          <Route path={employerAppPath('/khai-bao-nhu-cau')} element={<EmployerConsultingNeedPage />} />
         </Route>
         <Route element={<EmployerOnboardingGuard />}>
           <Route element={<DashboardLayout />}>

@@ -7,7 +7,6 @@ describe('employer verification progress', () => {
     expect(getEmployerVerificationProgress({
       email_verified: true,
       registration_completed: true,
-      consulting_need_completed: true,
       phone_verified: true,
       company_linked: true,
       business_doc_submitted: true,

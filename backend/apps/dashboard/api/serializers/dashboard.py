@@ -4,7 +4,6 @@ from rest_framework import serializers
 class VerificationProgressSerializer(serializers.Serializer):
     email_verified = serializers.BooleanField()
     registration_completed = serializers.BooleanField()
-    consulting_need_completed = serializers.BooleanField()
     phone_verified = serializers.BooleanField()
     company_linked = serializers.BooleanField()
     business_doc_submitted = serializers.BooleanField()

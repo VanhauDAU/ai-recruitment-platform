@@ -13,7 +13,7 @@ from apps.accounts.models import User
 from apps.accounts.tests.factories import make_admin
 from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.domain.page_registry import MAIN_SECTION_KEYS
-from apps.jobs.models import Job, JobCategory
+from apps.jobs.models import Job
 from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import (
@@ -27,7 +27,6 @@ from ..models import (
     EmployerVerificationCase,
     Industry,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 from ..services import (
     confirm_verification_decision,
@@ -236,20 +235,6 @@ class AdminVerificationTestCase(APITestCase):
         self.first = self._complete_recruiter(self.first_user)
         self.second_user = self._employer('second-recruiter@example.com')
         self.second = self._complete_recruiter(self.second_user)
-        self.category = JobCategory.objects.create(
-            name='Kiểm thử xác thực NTD',
-            category_type=JobCategory.CategoryType.SPECIALIZATION,
-        )
-        for recruiter in (self.first, self.second):
-            RecruitmentNeed.objects.create(
-                recruiter=recruiter,
-                position_category=self.category,
-                position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-                is_continuous=True,
-                headcount=1,
-                budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-                completed_at=timezone.now(),
-            )
         self.first_case = self._case_with_approved_documents(self.first)
         self.second_case = self._case_with_approved_documents(self.second)
 

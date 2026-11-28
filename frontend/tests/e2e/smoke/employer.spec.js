@@ -422,67 +422,6 @@ test('employer auth: legacy verification link keeps its token', async ({ page })
   await expect(page.getByRole('heading', { name: 'Xác thực thành công!' })).toBeVisible()
 })
 
-test('employer auth: verified session completes recruitment need before dashboard', async ({ page }) => {
-  await mockPublicApi(page)
-  let needCompleted = false
-  let submittedNeed = null
-  await setEmployerSession(page, () => ({
-    email_verified: true,
-    employer_onboarding_required: !needCompleted,
-    employer_onboarding_step: needCompleted ? 'complete' : 'consulting_need',
-  }))
-  await page.route(/http:\/\/localhost:8000\/api\/public\/jobs\/categories\/.*/, async (route) => {
-    await route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify([{
-        id: 12,
-        public_id: 'cat_sales',
-        name: 'Kinh doanh phần mềm',
-        category_type: 'specialization',
-      }]),
-    })
-  })
-  await page.route('http://localhost:8000/api/employer/consulting-need/', async (route) => {
-    if (route.request().method() === 'POST') {
-      submittedNeed = route.request().postDataJSON()
-      needCompleted = true
-      await route.fulfill({
-        contentType: 'application/json',
-        body: JSON.stringify({ public_id: 'need_test', ...submittedNeed }),
-      })
-      return
-    }
-    await route.fulfill({ contentType: 'application/json', body: 'null' })
-  })
-
-  await page.goto('/tuyendung/app/tong-quan')
-
-  await expect(page).toHaveURL(/\/tuyendung\/app\/khai-bao-nhu-cau$/)
-  await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
-  await expect(page.getByText('Nhu cầu tuyển dụng', { exact: true })).toBeVisible()
-  await expect(page.getByText('Bạn đang tuyển dụng vị trí chuyên môn nào?')).toBeVisible()
-  await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn đang tuyển dụng vị trí chuyên môn nào/ }), 'Kinh doanh phần mềm')
-  await page.getByRole('checkbox', { name: 'Tuyển liên tục' }).check()
-  await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn có nhu cầu cần tư vấn kỹ hơn/ }), 'Tôi muốn biết thêm về các chương trình ưu đãi')
-  await page.getByRole('button', { name: 'Hoàn thành' }).click()
-
-  await expect.poll(() => submittedNeed).toMatchObject({
-    position_category: 12,
-    position_level: 'employee',
-    is_continuous: true,
-    headcount: 1,
-    budget_source: 'company',
-    consultation_topics: ['promotions'],
-  })
-  await expect(page).toHaveURL(/\/tuyendung\/app\/xac-thuc-tai-khoan$/)
-  await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
-  await expect(page.getByText('Xác thực số điện thoại', { exact: true })).toBeVisible()
-
-  await page.goto('/tuyendung/app/khai-bao-nhu-cau')
-  await expect(page).toHaveURL(/\/tuyendung\/app\/tong-quan$/)
-  await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
-})
-
 test('employer workspace: verification actions stay inside the 100vh app shell', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {

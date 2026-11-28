@@ -28,7 +28,6 @@ def _normalized_legal_text(value):
 VERIFICATION_CHECK_FIELDS = (
     'email_verified',
     'registration_completed',
-    'consulting_need_completed',
     'phone_verified',
     'company_linked',
     'representative_documents_submitted',

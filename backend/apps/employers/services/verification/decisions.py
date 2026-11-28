@@ -171,7 +171,6 @@ def _prepare_final_decision(
     case.current_documents_for_checks = [
         document for document in scope.documents if document.is_current
     ]
-    scope.recruiter.verification_recruitment_needs = list(scope.recruitment_needs)
     can_approve, checks = verification_can_be_approved(case)
     if (
         enforce_current_state

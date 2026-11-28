@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerVerificationPanel from './EmployerVerificationPanel'
 
 const mocks = vi.hoisted(() => ({
-  getEmployerRecruitmentNeed: vi.fn(),
   readinessState: {
     profile: { onboarding: {} },
     profileQuery: { refetch: vi.fn() },
@@ -18,7 +17,6 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@/entities/account/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
-  getEmployerRecruitmentNeed: mocks.getEmployerRecruitmentNeed,
   useEmployerReadiness: () => mocks.readinessState,
 }))
 vi.mock('@/entities/account/session', () => ({
@@ -44,7 +42,6 @@ function renderPage() {
 
 describe('EmployerVerificationPanel readiness navigation', () => {
   beforeEach(() => {
-    mocks.getEmployerRecruitmentNeed.mockReset().mockResolvedValue(null)
     mocks.readinessState.isAccessError = false
     mocks.readinessState.isChecking = true
     mocks.readinessState.canAccessCandidateData = false

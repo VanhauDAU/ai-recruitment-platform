@@ -12,11 +12,6 @@ const STEP_META = {
     pageLabel: 'Xác minh email',
     path: employerAppPath('/xac-thuc-email'),
   },
-  consulting_need_completed: {
-    label: 'Nhu cầu tuyển dụng',
-    pageLabel: 'Nhu cầu tư vấn',
-    path: employerAppPath('/khai-bao-nhu-cau'),
-  },
 }
 
 function missingKeys(onboarding) {
@@ -34,7 +29,7 @@ export default function InitialOnboardingStatus({ onboarding, completed = false 
   const pageLabels = missing.map((key) => STEP_META[key]?.pageLabel).filter(Boolean)
   const pageHints = missing.map((key) => STEP_META[key]?.path).filter(Boolean)
   let detail = 'Chưa xác định bước còn thiếu'
-  if (isCompleted) detail = 'Đã đủ hồ sơ, email và nhu cầu'
+  if (isCompleted) detail = 'Đã đủ hồ sơ và email'
   else if (missingLabels.length) detail = `Thiếu: ${missingLabels.join(', ')}`
 
   return (

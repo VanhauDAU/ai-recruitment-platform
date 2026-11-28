@@ -158,25 +158,7 @@
   "employer_company_save_changes": "Save changes",
   "employer_company_layout_read_only": "You can only view the company page layout.",
   "employer_company_verify_trusted_badge": "Trusted account",
-  "employer_company_verify_hiring_priority": "You're prioritizing hiring for",
-  "employer_company_verify_default_position": "The right people for your business",
   "employer_company_verify_default_company": "Your company profile",
-  "employer_company_verify_headcount": [
-    {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
-      "match": {
-        "countPlural=one": "{count} open position",
-        "countPlural=other": "{count} open positions"
-      }
-    }
-  ],
-  "employer_company_verify_headcount_hint": "The details you provided are used to personalize your workspace and suggest candidate sources.",
   "employer_company_verify_start_title": "Start on the right foundation",
   "employer_company_verify_start_hint": "Verification helps candidates recognize trusted employers and protects your recruitment data.",
   "employer_company_verify_load_error": "Couldn't load your account verification status.",

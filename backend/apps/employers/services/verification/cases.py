@@ -147,18 +147,11 @@ def verification_checks(case):
     current_documents = {}
     for document in documents:
         current_documents.setdefault(document.doc_type, []).append(document)
-    recruitment_needs = getattr(recruiter, 'verification_recruitment_needs', None)
-    consulting_need_completed = (
-        bool(recruitment_needs)
-        if recruitment_needs is not None
-        else recruiter.recruitment_needs.exists()
-    )
     required = required_document_types(case)
     business_required = required & BUSINESS_DOCUMENT_TYPES
     return {
         'email_verified': recruiter.user.email_verified,
         'registration_completed': recruiter.registration_completed_at is not None,
-        'consulting_need_completed': consulting_need_completed,
         'phone_verified': recruiter.has_verified_phone,
         'company_linked': recruiter.company_id is not None
         and case.company_id == recruiter.company_id,
@@ -191,7 +184,6 @@ def verification_can_be_approved(case):
     required = {
         'email_verified',
         'registration_completed',
-        'consulting_need_completed',
         'phone_verified',
         'company_linked',
         'representative_documents_submitted',

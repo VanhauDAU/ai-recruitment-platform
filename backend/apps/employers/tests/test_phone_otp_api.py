@@ -9,15 +9,12 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.jobs.models import JobCategory
-
 from ..models import (
     Company,
     CompanyDocument,
     EmployerVerificationCase,
     PhoneOtp,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 from ..services.phone_challenges import dispatch_sms_phone_challenge
 from ..services.sms_provider import (
@@ -100,19 +97,6 @@ class PhoneOtpTests(APITestCase):
                 'dpa_accepted_at',
                 'updated_at',
             ]
-        )
-        category = JobCategory.objects.create(
-            name='Kiểm thử reconcile điện thoại',
-            category_type=JobCategory.CategoryType.SPECIALIZATION,
-        )
-        RecruitmentNeed.objects.create(
-            recruiter=self.recruiter,
-            position_category=category,
-            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-            is_continuous=True,
-            headcount=1,
-            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-            completed_at=now,
         )
         verification_case = EmployerVerificationCase.objects.create(
             recruiter=self.recruiter,

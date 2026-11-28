@@ -280,7 +280,6 @@
   "src/pages/admin/jobs/JobModeration.test.jsx": 4.8,
   "src/pages/admin/settings/Settings.test.jsx": 3.54,
   "src/pages/employer/account/AccountInformation.test.jsx": 2.27,
-  "src/pages/employer/account/ConsultingNeed.test.jsx": 0.97,
   "src/pages/employer/account/PasswordLogin.test.jsx": 1.91,
   "src/pages/employer/auth/Register.test.jsx": 4.07,
   "src/pages/employer/campaigns/CampaignDetail.test.jsx": 5.06,

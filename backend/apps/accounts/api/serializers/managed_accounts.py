@@ -88,10 +88,7 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
             company = recruiter.company
             verification = getattr(recruiter, 'verification_case', None)
             checks = verification_checks(verification) if verification else {}
-            initial_onboarding = build_employer_initial_onboarding(
-                recruiter,
-                has_recruitment_need=getattr(obj, '_has_recruitment_need', False),
-            )
+            initial_onboarding = build_employer_initial_onboarding(recruiter)
             tax_code = company.tax_code if company else ''
             return {
                 'kind': 'employer',

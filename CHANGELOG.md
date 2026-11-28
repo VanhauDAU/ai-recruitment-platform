@@ -8,6 +8,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-29
 
+#### Changed — Onboarding NTD bỏ bước khai báo nhu cầu tuyển dụng
+
+- Onboarding NTD còn hai bước: hoàn thiện hồ sơ → xác thực email, rồi vào thẳng checklist
+  xác thực tài khoản. Trang `/tuyendung/app/khai-bao-nhu-cau` và `GET/POST
+  /api/employer/consulting-need/` đã gỡ; `employer_onboarding_step` không còn `consulting_need`.
+- Cờ `consulting_need_completed` bỏ khỏi onboarding, readiness, dashboard và điều kiện admin
+  duyệt xác thực (hành trình còn 8 bước). Tài khoản cũ chưa khai báo nhu cầu tự qua onboarding.
+- Nhu cầu tuyển dụng vẫn quản lý tùy chọn ở Cài đặt → Nhu cầu tuyển dụng; dữ liệu cũ giữ nguyên.
+
+#### Changed — Sơ đồ use case tổng quát và ảnh trang mẫu CV
+
+- Sơ đồ use case tổng quát (`docs/01-phan-tich`) cập nhật 27/11: thêm Nhắn tin và hẹn lịch
+  phỏng vấn (ProCV Connect), Đối sánh ngữ nghĩa CV–JD chuyển sang đã làm, việc làm gần tôi gộp
+  vào Tìm kiếm việc làm.
+- Trang danh sách mẫu CV dùng ảnh trợ lý ProCV mới (WebP 8 KB, trong `public/images`) thay ảnh
+  mascot TopCV cũ trên R2.
+
 #### Changed — Email gửi ứng viên đứng tên công ty: "Tên công ty qua ProCV"
 
 - Email gửi ứng viên thay mặt nhà tuyển dụng (kết quả ứng tuyển, NTD xem/tải CV, lưu kho, lời

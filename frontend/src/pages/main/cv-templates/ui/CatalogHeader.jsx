@@ -1,8 +1,6 @@
 import { RightOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { legacyAsset } from '@/shared/config/assets'
-
-const HERO_IMAGE = legacyAsset('cv-template/toppy-list-mau-cv.png')
+const HERO_IMAGE = '/images/cv-templates/procv-mascot-list-cv.webp'
 
 export default function CatalogHeader({ activeCategory, localeLabel, year, subtitle }) {
   // Xác định xem danh mục có thuộc nhóm style hay ngành nghề
@@ -57,8 +55,12 @@ export default function CatalogHeader({ activeCategory, localeLabel, year, subti
       <div className="hidden shrink-0 lg:block">
         <img
           src={HERO_IMAGE}
-          alt="Toppy hướng dẫn chọn mẫu CV"
-          className="h-28 w-auto object-contain drop-shadow-md"
+          alt="Trợ lý ProCV hướng dẫn chọn mẫu CV"
+          width={152}
+          height={112}
+          className="h-28 w-auto object-contain"
+          // Ảnh nền trắng: multiply để hòa vào nền xám của trang.
+          style={{ mixBlendMode: 'multiply' }}
           loading="lazy"
         />
       </div>

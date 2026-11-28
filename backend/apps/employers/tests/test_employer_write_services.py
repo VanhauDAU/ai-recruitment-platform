@@ -354,7 +354,6 @@ class ReadPathsDoNotCreateProfilesTests(APITestCase):
 
     def test_reads_answer_as_before_without_writing(self):
         self.assertEqual(self.client.get(reverse('employer-recruitment-needs')).data, [])
-        self.assertIsNone(self.client.get(reverse('employer-consulting-need')).data)
         self.assertEqual(self.client.get(reverse('employer-company-documents')).data, [])
         self.assertEqual(self.client.get(reverse('employer-company')).status_code, 404)
         self.assertEqual(self.client.get(reverse('employer-company-members')).status_code, 403)

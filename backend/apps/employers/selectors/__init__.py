@@ -108,7 +108,6 @@ from .readiness import (
     evaluate_employer_readiness,
 )
 from .recruitment_needs import (
-    first_recruitment_need,
     recruiter_recruitment_need,
     recruiter_recruitment_needs,
 )
@@ -146,7 +145,6 @@ __all__ = [
     'employer_notification_queryset',
     'employer_notification_unread_counts',
     'employer_unread_notification_count',
-    'first_recruitment_need',
     'has_explicit_company_link',
     'is_registration_placeholder_company',
     'can_access_employer_document_content',

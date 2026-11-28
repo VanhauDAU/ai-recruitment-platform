@@ -116,14 +116,12 @@ class SessionUserSerializer(serializers.ModelSerializer):
         if recruiter is None:
             return 'registration'
         # Keep routing and the administrator read model on the same canonical
-        # three-step definition.
+        # two-step definition.
         onboarding = self._employer_onboarding(obj)
         if not onboarding['registration_completed']:
             return 'registration'
         if not onboarding['email_verified']:
             return 'email_verification'
-        if not onboarding['consulting_need_completed']:
-            return 'consulting_need'
         return 'complete'
 
     def get_employer_verification_completed(self, obj) -> bool:

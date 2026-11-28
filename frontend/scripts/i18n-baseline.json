@@ -1,7 +1,7 @@
 {
   "app": 106,
-  "entities": 325,
-  "features/admin": 1097,
+  "entities": 322,
+  "features/admin": 1096,
   "features/common": 221,
   "features/employer": 0,
   "features/main": 620,
@@ -11,7 +11,7 @@
   "pages/main": 738,
   "shared": 25,
   "src": 0,
-  "widgets/admin": 1543,
+  "widgets/admin": 1542,
   "widgets/common": 16,
   "widgets/employer": 0,
   "widgets/main": 298

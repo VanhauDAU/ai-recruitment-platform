@@ -46,7 +46,6 @@ from ..views import (
     RecruiterMeView,
     RecruitmentNeedDetailView,
     RecruitmentNeedListCreateView,
-    RecruitmentNeedView,
     SendPhoneOtpView,
     VerifyPhoneOtpView,
 )
@@ -85,7 +84,6 @@ urlpatterns = [
         CompleteEmployerRegistrationView.as_view(),
         name='employer-registration-complete',
     ),
-    path('consulting-need/', RecruitmentNeedView.as_view(), name='employer-consulting-need'),
     path(
         'recruitment-needs/',
         RecruitmentNeedListCreateView.as_view(),

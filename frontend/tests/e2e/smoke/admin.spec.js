@@ -595,7 +595,6 @@ test('admin employer detail: company media and compact verification comparison r
     checks: {
       email_verified: true,
       registration_completed: true,
-      consulting_need_completed: true,
       phone_verified: true,
       company_linked: true,
       representative_documents_submitted: true,
@@ -875,8 +874,8 @@ test('admin employer detail: company media and compact verification comparison r
   await expect(page.getByRole('region', {
     name: 'Hồ sơ đã hoàn tất toàn bộ điều kiện',
   })).toBeVisible()
-  await page.getByRole('button', { name: 'Xem 9 bước' }).click()
-  await expect(page.getByRole('list', { name: 'Chi tiết 9 bước xác thực' })).toBeVisible()
+  await page.getByRole('button', { name: 'Xem 8 bước' }).click()
+  await expect(page.getByRole('list', { name: 'Chi tiết 8 bước xác thực' })).toBeVisible()
   await expect(page.getByText('Địa chỉ đăng ký')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Phóng to giấy tờ' })).toBeVisible()
   await expect(page.locator('.verification-image-zoom-value')).toHaveText('Vừa khung')

@@ -1,7 +1,5 @@
 """Canonical employer-readiness policy and API contract tests."""
 
-from datetime import timedelta
-
 from django.conf import settings
 from django.db import connection
 from django.test import SimpleTestCase
@@ -11,7 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.jobs.models import Job, JobCategory
+from apps.jobs.models import Job
 
 from ..models import (
     Company,
@@ -19,7 +17,6 @@ from ..models import (
     EmployerDpaAcceptance,
     EmployerVerificationCase,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 from ..selectors import DpaStatus, evaluate_employer_readiness
 
@@ -172,19 +169,6 @@ class EmployerReadinessContractTests(APITestCase):
             document_url=settings.EMPLOYER_DPA_DOCUMENT_URL,
             ip_address='127.0.0.1',
         )
-        category = JobCategory.objects.create(
-            name='Readiness backend',
-            category_type=JobCategory.CategoryType.SPECIALIZATION,
-        )
-        RecruitmentNeed.objects.create(
-            recruiter=self.recruiter,
-            position_category=category,
-            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-            target_date=timezone.localdate() + timedelta(days=30),
-            headcount=1,
-            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-            completed_at=timezone.now(),
-        )
         self.case = EmployerVerificationCase.objects.create(
             recruiter=self.recruiter,
             company=self.company,
@@ -293,17 +277,7 @@ class EmployerReadinessContractTests(APITestCase):
             return len(captured)
 
         baseline = query_count()
-        category = self.recruiter.recruitment_needs.first().position_category
         for index in range(5):
-            RecruitmentNeed.objects.create(
-                recruiter=self.recruiter,
-                position_category=category,
-                position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-                target_date=timezone.localdate() + timedelta(days=40 + index),
-                headcount=index + 1,
-                budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-                completed_at=timezone.now(),
-            )
             Job.objects.create(
                 posted_by=self.user,
                 company=self.company,

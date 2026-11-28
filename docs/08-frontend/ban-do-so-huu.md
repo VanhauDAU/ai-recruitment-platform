@@ -883,14 +883,13 @@ pages/employer/connect/ConnectPage (/tuyendung/app/procv-connect[/:id], trong wo
 ```text
 app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   + EmployerOnboardingGuard
-  → pages/employer/auth/Login|Register|Onboarding|ConsultingNeed|EmployerVerify|Dashboard
+  → pages/employer/auth/Login|Register|Onboarding|EmployerVerify|Dashboard
     + pages/employer/account/PhoneVerify|PasswordLogin|CompanySettings
       |BusinessLicense|PersonalDataProtection
-    → widgets/employer/onboarding, employer-consulting-need,
-      employer-verification, employer-dashboard, employer-account-settings,
+    → widgets/employer/onboarding, employer-verification, employer-dashboard, employer-account-settings,
       employer-notification-center
       → features/common/account/auth, complete-employer-registration,
-        capture-employer-recruitment-need, verify-employer-account,
+        verify-employer-account,
         change-password, manage-employer-company
           → entities/account/session, employer-profile, employer-dashboard,
             employer-notification, job, location
@@ -914,8 +913,8 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   `candidate_data_access`, `dpa_status`, `blockers`; payload canonical partial,
   sai kiểu hoặc tự mâu thuẫn phải fail closed. Chỉ khi cả năm field đều vắng
   mới được fallback workspace legacy; candidate-data không fallback legacy.
-  `widgets/employer/onboarding` chỉ hoàn thiện hồ sơ Google; widget
-  `employer-consulting-need` compose form nhu cầu sau xác thực. Email/phone/DPA
+  `widgets/employer/onboarding` chỉ hoàn thiện hồ sơ Google. Nhu cầu tuyển
+  dụng là cài đặt tùy chọn (`manage-employer-recruitment-needs`). Email/phone/DPA
   là workflow bảo mật riêng, không còn bị gộp thành checklist onboarding.
 - `entities/dashboard/employer-dashboard` sở hữu read-model tổng hợp từ backend
   `apps.dashboard`; widget dashboard không tải toàn bộ danh sách job/application
@@ -954,7 +953,7 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   và thêm cặp `[lớp tô, nét]` vào `ICONS` (tên camelCase).
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
-  email_verification → consulting_need → complete`; UI redirect không thay thế
+  email_verification → complete`; UI redirect không thay thế
   guard và backend permission. Sau onboarding, `JobWorkspaceGuard` bảo vệ
   jobs/campaigns và `CandidateDataGuard` bảo vệ applications. Khi readiness tải
   thành công nhưng capability bị từ chối, route guard điều hướng về
@@ -966,11 +965,10 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   email, CV/link download, preview và activity/deep-link ứng viên phải bị bỏ.
   Blocker chỉ điều hướng qua machine-action allowlist phía frontend, không dùng
   URL do backend gửi hoặc parse message để quyết định quyền.
-- `/employer-verify` chỉ là checklist bảo mật sau khi consulting hoàn tất, không
+- `/employer-verify` chỉ là checklist bảo mật sau khi xác thực email, không
   tạo thêm state onboarding bắt buộc. Checklist không lặp lại email đã xác thực;
   các action mở route account nội bộ và tin đầu tiên chỉ bật sau khi đủ năm điều
-  kiện trước đó. Submit consulting đi tới checklist; direct navigation lại
-  `/consulting-need` ở state `complete` phải về dashboard.
+  kiện trước đó.
 - `EmployerWorkspaceLayout` chiếm đúng `100dvh`; chỉ vùng `Content` cuộn. Mục
   menu chưa có workflow phải disabled trong workspace, không điều hướng sang
   landing page marketing.

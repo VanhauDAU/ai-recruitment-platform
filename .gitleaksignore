@@ -24,3 +24,4 @@ d13d016b6e4bddb4c6beaa3f2edcf1f9907aabad:backend/apps/cv_templates/management/co
 d13d016b6e4bddb4c6beaa3f2edcf1f9907aabad:frontend/src/entities/cv/ui/CvDocumentPreview.test.jsx:generic-api-key:136
 d7c13cdded77df6c4bd0bb9474103ab32d928820:.github/workflows/backend-ci.yml:generic-api-key:291
 5856008efe5dd149111c407c2428df1855abea5e:.github/workflows/backend-ci.yml:generic-api-key:83
+321d893901a8cdd667219caf5f191d5bd3f76e36:backend/apps/sitecontent/seed_data/settings.json:generic-api-key:311
