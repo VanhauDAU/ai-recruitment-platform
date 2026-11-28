@@ -183,6 +183,12 @@ Quy tắc nội dung:
 | Chia sẻ mạng xã hội | `seo_og_image` | Ảnh OG mặc định | image | "" | ✓ |
 | Lập chỉ mục | `seo_robots_index` | Cho phép index | boolean | true | ✓ |
 | Lập chỉ mục | `seo_google_site_verification` | Google Search Console verification | text | "" | ✓ |
+| Đo lường | `seo_ga4_measurement_id` | Google Analytics 4 | text (`G-XXXXXXXXXX`) | "" | ✓ |
+
+`seo_ga4_measurement_id`: dán Measurement ID của luồng web GA4. Frontend chỉ tải gtag.js khi
+người xem đồng ý nhóm Hiệu năng, không tải ở cổng quản trị; rút đồng ý thì ngừng gửi và xóa
+cookie `_ga*`. Lượt xem khi chuyển trang do "Đo lường nâng cao" (thay đổi lịch sử trình duyệt)
+của luồng GA4 ghi nhận, để bật mặc định. `options.pattern` (regex) được kiểm tra khi lưu.
 
 ### Liên hệ & mạng xã hội (`contact`)
 
@@ -318,12 +324,21 @@ sai chủ quyền Hoàng Sa, Trường Sa.
 | Loại email | `email_notify_new_application` | Báo NTD khi có ứng tuyển mới | boolean | true |  |
 | Loại email | `email_welcome_enabled` | Email chào mừng khi đăng ký | boolean | true |  |
 | Nhận diện email | `email_from_name` | Tên người gửi | text | "ProCV" |  |
+| Nhận diện email | `email_company_sender_enabled` | Gửi ứng viên dưới tên công ty | boolean | true |  |
 | Nhận diện email | `email_footer_text` | Chân email | textarea | "ProCV - Nền tảng việc làm & AI Caree… |  |
 | Gợi ý việc làm qua email | `job_alert_enabled` | Bật email gợi ý việc làm | boolean | true |  |
 | Gợi ý việc làm qua email | `job_alert_delivery_hour` | Giờ gửi email gợi ý việc làm | number | 8 |  |
 | Gợi ý việc làm qua email | `job_alert_max_jobs` | Số việc làm tối đa mỗi email | number | 10 |  |
 | Gợi ý việc làm qua email | `job_alert_limit_per_candidate` | Số thông báo việc làm mỗi ứng viên | number | 5 | ✓ |
 | Nhắc nhà tuyển dụng | `recruiter_reminders_enabled` | Nhắc nhà tuyển dụng hồ sơ chưa phản hồi | boolean | true |  |
+
+`email_company_sender_enabled`: email gửi ứng viên thay mặt nhà tuyển dụng (kết quả ứng tuyển,
+NTD xem/tải CV, kho ứng viên, lời mời ứng tuyển/kết nối, lịch phỏng vấn, tự động từ chối, tin
+nhắn và tệp .ics của ProCV Connect) hiện người gửi `Tên công ty qua ProCV <EMAIL_FROM_ADDRESS>`
+(bản tiếng Anh: "via"). Chỉ áp cho công ty đang có người đại diện hợp pháp
+(`legally_represented_companies_queryset`); công ty khác, email "Hồ sơ đã được tiếp nhận" và mọi
+email gửi nhà tuyển dụng vẫn dùng `email_from_name`. Địa chỉ gửi không bao giờ đổi để SPF/DKIM/
+DMARC vẫn khớp tên miền; tên công ty dài quá 60 ký tự bị cắt.
 
 ### AI (`ai`)
 

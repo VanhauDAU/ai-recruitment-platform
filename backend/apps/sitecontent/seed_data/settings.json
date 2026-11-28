@@ -308,6 +308,24 @@
     }
   },
   {
+    "key": "seo_ga4_measurement_id",
+    "label": "Google Analytics 4",
+    "group": "seo",
+    "section": "Đo lường",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "Mã đo lường (Measurement ID) của luồng web GA4. Để trống thì không tải Google Analytics.",
+    "help": "Dạng G-XXXXXXXXXX, lấy ở GA4 → Quản trị → Luồng dữ liệu → luồng web. Script chỉ tải khi người xem đồng ý cookie Hiệu năng; cổng quản trị không đo.",
+    "options": {
+      "applies_to": [
+        "SEO"
+      ],
+      "max_length": 20,
+      "pattern": "^G-[A-Z0-9]{4,16}$"
+    }
+  },
+  {
     "key": "hotline",
     "label": "Hotline hỗ trợ",
     "group": "contact",
@@ -1956,13 +1974,30 @@
     "value_type": "text",
     "value": "ProCV",
     "is_public": false,
-    "description": "Tên người gửi hiển thị trong hộp thư, áp cho mọi email hệ thống.",
+    "description": "Tên người gửi hiển thị trong hộp thư cho email hệ thống.",
     "help": "Địa chỉ gửi lấy từ cấu hình máy chủ (EMAIL_FROM_ADDRESS). Để trống thì dùng tên site. Người nhận bấm trả lời sẽ gửi về Email hỗ trợ.",
     "options": {
       "applies_to": [
         "Email"
       ],
       "max_length": 60
+    }
+  },
+  {
+    "key": "email_company_sender_enabled",
+    "label": "Gửi ứng viên dưới tên công ty",
+    "group": "email",
+    "section": "Nhận diện email",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Email gửi ứng viên thay mặt nhà tuyển dụng hiện tên người gửi dạng \"Tên công ty qua ProCV\".",
+    "help": "Áp cho thông báo kết quả, lời mời, lịch phỏng vấn và tin nhắn ProCV Connect. Chỉ dùng tên công ty đang có người đại diện đã được xác thực; công ty khác vẫn gửi dưới Tên người gửi. Địa chỉ gửi và email gửi nhà tuyển dụng không đổi.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "depends_on": "email_notifications_enabled"
     }
   },
   {

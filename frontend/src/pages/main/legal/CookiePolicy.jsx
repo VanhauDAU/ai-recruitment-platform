@@ -26,6 +26,7 @@ function cookieRows() {
     ['procv_employer_cv_ordering, procv_admin_*', 'localStorage', m.cookie_policy_p_ui_order(), preferences, untilWithdraw],
     ['procv_viewer_id', m.cookie_policy_mech_signed(), m.cookie_policy_p_viewer(), analytics, m.cookie_policy_d_365d()],
     ['procv_campaign_ref_v1', 'localStorage', m.cookie_policy_p_campaign(), analytics, m.cookie_policy_d_30d()],
+    ['_ga, _ga_<id>', 'Cookie (Google)', m.cookie_policy_p_ga(), analytics, m.cookie_policy_d_2y()],
   ]
 }
 
@@ -62,6 +63,7 @@ export default function CookiePolicy() {
             <h2 className="text-lg font-bold text-slate-900">{m.cookie_policy_third_title()}</h2>
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li><span className="font-semibold">Google reCAPTCHA</span> {m.cookie_policy_third_recaptcha()}</li>
+              <li><span className="font-semibold">Google Analytics</span> {m.cookie_policy_third_analytics()}</li>
               <li><span className="font-semibold">YouTube/Vimeo, Google Maps</span> {m.cookie_policy_third_embeds()}</li>
               <li><span className="font-semibold">{m.cookie_policy_third_errors_name()}</span> {m.cookie_policy_third_errors()}</li>
               <li><span className="font-semibold">{m.cookie_policy_third_marketing_name()}</span> {m.cookie_policy_third_marketing()}</li>

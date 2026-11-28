@@ -21,6 +21,8 @@ class EventSpec:
     email_subject: str = ''  # defaults to the title
     email_template: str = 'application_update'
     action_label: str = 'Xem hồ sơ ứng tuyển'
+    # Email gửi thay mặt nhà tuyển dụng: người gửi "<công ty> qua ProCV".
+    from_company: bool = True
 
 
 # Templates only ever receive the company name and job title: internal notes,
@@ -36,6 +38,8 @@ EVENTS = {
         web_switch='application_received_web',
         email_subject='Chúc mừng bạn đã ứng tuyển thành công vị trí {job_title}',
         email_template='application_received',
+        # ProCV xác nhận và gợi ý việc của công ty khác: không đứng tên công ty.
+        from_company=False,
     ),
     Event.APPLICATION_VIEWED: EventSpec(
         title='Nhà tuyển dụng đã xem hồ sơ của bạn',

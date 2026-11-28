@@ -3,12 +3,13 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.services import issue_tokens
+from apps.employers.tests.factories import add_recruiter, make_company, make_employer
 from apps.jobs.tests.factories import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 
@@ -108,6 +109,34 @@ class CandidateNotificationServiceTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('Backend Engineer', mail.outbox[0].body)
         self.assertEqual(pending_candidate_notification_email_ids(), [])
+
+    @override_settings(EMAIL_FROM_ADDRESS='no-reply@procv.site')
+    def test_recruiter_notice_is_sent_under_a_legally_represented_company(self):
+        verified = make_company(make_employer('owner-a@example.com'), name='Panda')
+        add_recruiter(verified)
+        unverified = make_company(make_employer('owner-b@example.com'), name='Ngân hàng X')
+        add_recruiter(unverified, approved=False)
+
+        for key, company in (('verified', verified), ('unverified', unverified)):
+            notice = self.emit(key, metadata={'company_public_id': company.public_id})
+            release_due_candidate_notifications()
+            deliver_candidate_notification_email(notice.pk)
+        received = self.emit(
+            'received',
+            event=Event.APPLICATION_SUBMITTED,
+            metadata={'company_public_id': verified.public_id},
+        )
+        release_due_candidate_notifications()
+        deliver_candidate_notification_email(received.pk)
+
+        self.assertEqual(
+            [message.from_email for message in mail.outbox],
+            [
+                'Panda qua ProCV <no-reply@procv.site>',
+                'ProCV <no-reply@procv.site>',
+                'ProCV <no-reply@procv.site>',
+            ],
+        )
 
     def test_view_email_follows_the_candidate_preference(self):
         profile, _ = CandidateProfile.objects.get_or_create(user=self.candidate)

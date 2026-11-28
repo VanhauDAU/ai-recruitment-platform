@@ -10,6 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
+from apps.employers.selectors import email_sender_company_name
 from apps.jobs.models import Job, JobApplicationContact
 from apps.sitecontent.selectors import business_emails_enabled, email_sender
 from common.email import send_html_email
@@ -215,7 +216,7 @@ def send_due_auto_rejection_emails(*, now=None, batch_size=200):
                 text=body,
                 html=_email_html(body),
                 to=recipient,
-                **email_sender(),
+                **email_sender(email_sender_company_name(application.job.company.public_id)),
             )
         updated = Application.objects.filter(
             pk=application.pk,

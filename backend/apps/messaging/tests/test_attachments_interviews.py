@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.candidates.models import CandidateNotification
-from apps.employers.models import EmployerNotification
+from apps.employers.models import EmployerNotification, EmployerVerificationCase
 from apps.employers.tests.factories import PDF_BYTES
 from apps.jobs.tests.factories import enable_email_notifications
 
@@ -159,8 +159,15 @@ class InterviewTests(ConversationMixin, APITestCase):
         system = Message.objects.filter(kind='system').last()
         self.assertEqual(system.payload['event'], 'interview_accepted')
         mail.outbox.clear()
+        EmployerVerificationCase.objects.filter(recruiter__user=self.recruiter).update(
+            verification_method=EmployerVerificationCase.VerificationMethod.BUSINESS_REGISTRATION
+        )
         sent = send_interview_calendar(InterviewAppointment.objects.get(public_id=interview_id))
         self.assertEqual(sent, 2)
+        # Ứng viên nhận dưới tên công ty, nhà tuyển dụng nhận từ ProCV.
+        senders = {message.to[0]: message.from_email for message in mail.outbox}
+        self.assertTrue(senders[self.candidate.email].startswith('Connect Co qua ProCV <'))
+        self.assertTrue(senders[self.recruiter.email].startswith('ProCV <'))
         attachment = mail.outbox[0].attachments[0]
         self.assertEqual(attachment[0], 'phong-van.ics')
         self.assertIn('BEGIN:VEVENT', attachment[1])

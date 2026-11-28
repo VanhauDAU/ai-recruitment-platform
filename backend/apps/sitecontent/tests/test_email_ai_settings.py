@@ -1,5 +1,9 @@
 """Email & AI settings của GĐ4 (ADR-0026): một nguồn cho người gửi, công tắc và lựa chọn."""
 
+from email.header import decode_header, make_header
+from email.utils import getaddresses
+
+from django.core.mail import EmailMessage
 from django.test import TestCase, override_settings
 
 from apps.accounts.models import User
@@ -31,6 +35,29 @@ class EmailSettingsTests(TestCase):
             email_sender(),
             {'from_email': 'Tuyển dụng ProCV <no-reply@procv.vn>', 'reply_to': 'hotro@procv.vn'},
         )
+
+    def test_company_sender_keeps_our_address_and_survives_header_parsing(self):
+        _set('email_from_name', 'ProCV', SiteSetting.ValueType.TEXT)
+        sender = email_sender('Công ty "Gấu", chi nhánh\r\nBcc: x@evil.test')
+
+        header = EmailMessage('s', 'b', sender['from_email'], ['a@example.com']).message()['From']
+        # Một địa chỉ duy nhất (dấu phẩy/xuống dòng không tách header), vẫn là địa chỉ của ta.
+        self.assertEqual([address for _, address in getaddresses([header])], ['no-reply@procv.vn'])
+        encoded_name = header.rsplit(' <', 1)[0]
+        self.assertEqual(
+            str(make_header(decode_header(encoded_name))),
+            'Công ty "Gấu", chi nhánh Bcc: x@evil.test qua ProCV',
+        )
+
+    def test_company_sender_is_truncated_and_follows_the_switch(self):
+        long_name = 'Công ty TNHH Một thành viên Thương mại Dịch vụ Xuất nhập khẩu Panda'
+        self.assertEqual(
+            email_sender(long_name)['from_email'],
+            f'{long_name[:59].rstrip()}… qua ProCV <no-reply@procv.vn>',
+        )
+
+        _set('email_company_sender_enabled', False)
+        self.assertEqual(email_sender('Panda')['from_email'], 'ProCV <no-reply@procv.vn>')
 
     def test_welcome_switch_stops_queueing_the_welcome_email(self):
         user = User.objects.create_user(email='new@example.com', password='Password@123')

@@ -1,12 +1,14 @@
 """Read site-managed configuration through a small public selector."""
 
 import json
+import re
 from functools import lru_cache
 from pathlib import Path
 
 from django.conf import settings as django_settings
 from django.core.cache import cache
 from django.db import connection
+from django.utils.translation import gettext as _
 
 from common.api.params import parse_bool
 from common.vietnam_time import vietnam_today
@@ -197,16 +199,49 @@ def email_brand_color():
     return email_branding()['primary_color']
 
 
-def email_sender():
+# Tên công ty trong tên người gửi: đủ nhận ra trong hộp thư, không đẩy "qua ProCV" ra khỏi
+# phần hiển thị của Gmail/Outlook.
+SENDER_COMPANY_MAX_LENGTH = 60
+
+
+def _header_text(value, limit):
+    """Một dòng, không ký tự điều khiển, cắt ở ``limit`` ký tự (thêm "…")."""
+    text = ' '.join(re.sub(r'[\x00-\x1f\x7f]', ' ', str(value or '')).split())
+    return text if len(text) <= limit else f'{text[: limit - 1].rstrip()}…'
+
+
+def _mailbox(name, address):
+    """``Tên <địa chỉ>``; tên có ký tự đặc biệt (dấu phẩy, ngoặc…) được đặt trong ngoặc kép.
+
+    Không mã hóa RFC 2047 ở đây: Django tự mã hóa tên Unicode khi dựng header.
+    """
+    if not name:
+        return address
+    if re.search(r'[()<>\[\]:;@\\,."]', name):
+        name = '"{}"'.format(name.replace('\\', '\\\\').replace('"', '\\"'))
+    return f'{name} <{address}>'
+
+
+def email_sender(on_behalf_of=''):
     """``from_email`` and ``reply_to`` for every product email (send_html_email kwargs).
 
     Display name from ``email_from_name`` (falls back to the site name), address
-    from the server config; replies go to ``support_email``.
+    from the server config; replies go to ``support_email``. ``on_behalf_of`` is
+    the name of a legally represented company sending to a candidate: the name
+    becomes "<company> qua <site>" while ``email_company_sender_enabled`` is on.
+    The address never changes, so SPF/DKIM/DMARC stay aligned with our domain.
     """
     brand = email_branding()
+    name = _header_text(brand['from_name'], 120)
+    company = _header_text(on_behalf_of, SENDER_COMPANY_MAX_LENGTH)
+    if company and get_bool_setting('email_company_sender_enabled', True):
+        name = _('%(company)s qua %(site)s') % {
+            'company': company,
+            'site': name or brand['site_name'],
+        }
     address = django_settings.EMAIL_FROM_ADDRESS
     return {
-        'from_email': f'{brand["from_name"]} <{address}>' if brand['from_name'] else address,
+        'from_email': _mailbox(name, address),
         'reply_to': brand['support_email'] or None,
     }
 

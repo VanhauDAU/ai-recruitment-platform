@@ -61,6 +61,7 @@ def add_to_talent_pool(application, *, recruiter, note='', tags=()):
         event_type=CandidateNotification.EventType.TALENT_POOL_SAVED,
         dedupe_key=f'talent-pool:{entry.public_id}',
         context={'company_name': application.job.company.company_name},
+        metadata={'company_public_id': application.job.company.public_id},
         action_path=CANDIDATE_POOL_PATH,
     )
     return entry

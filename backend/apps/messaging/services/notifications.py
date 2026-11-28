@@ -17,6 +17,7 @@ from apps.accounts.services import is_account_accessible
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import email_brand_context, emit_candidate_notification
 from apps.employers.models import EmployerNotification
+from apps.employers.selectors import email_sender_company_name
 from apps.employers.services import emit_employer_event
 from apps.sitecontent.selectors import business_emails_enabled, email_sender
 from common.email import send_html_email
@@ -59,7 +60,10 @@ def notify_candidate_interview(conversation, interview, *, scheduled):
         event_type=event,
         dedupe_key=f'{event}:{interview.public_id}:{interview.status}',
         context=_context(conversation),
-        metadata={'application_public_id': interview.application.public_id},
+        metadata={
+            'application_public_id': interview.application.public_id,
+            'company_public_id': conversation.company.public_id,
+        },
         action_path=conversation_path(conversation, Role.CANDIDATE),
     )
 
@@ -102,7 +106,10 @@ def notify_interview_reminder(interview, *, hours):
         event_type=CandidateNotification.EventType.INTERVIEW_REMINDER,
         dedupe_key=f'interview-reminder-{hours}h:{interview.public_id}',
         context=_context(conversation),
-        metadata={'application_public_id': interview.application.public_id},
+        metadata={
+            'application_public_id': interview.application.public_id,
+            'company_public_id': conversation.company.public_id,
+        },
         action_path=conversation_path(conversation, Role.CANDIDATE),
     )
     recruiter = conversation.job.posted_by
@@ -158,7 +165,8 @@ def _ics(interview):
     return '\r\n'.join(lines) + '\r\n'
 
 
-def _send(recipient, subject, template, context, attachment=None):
+def _send(recipient, subject, template, context, attachment=None, on_behalf_of=''):
+    """``on_behalf_of``: tên công ty khi gửi ứng viên thay mặt nhà tuyển dụng."""
     with recipient_language(recipient):
         brand = email_brand_context()
         context = {**context, 'brand': brand, 'site_name': brand['site_name'], 'title': subject}
@@ -170,8 +178,15 @@ def _send(recipient, subject, template, context, attachment=None):
             html=html,
             to=recipient.email,
             attachments=[attachment] if attachment else None,
-            **email_sender(),
+            **email_sender(on_behalf_of),
         )
+
+
+def _candidate_sender(conversation, role):
+    """Email gửi ứng viên đứng tên công ty; gửi nhà tuyển dụng vẫn là ProCV."""
+    if role != Role.CANDIDATE:
+        return ''
+    return email_sender_company_name(conversation.company.public_id)
 
 
 def send_interview_calendar(interview):
@@ -203,6 +218,7 @@ def send_interview_calendar(interview):
                 'action_url': conversation_url(conversation, role),
             },
             attachment=ics,
+            on_behalf_of=_candidate_sender(conversation, role),
         )
         sent += 1
     return sent
@@ -231,5 +247,6 @@ def send_unread_digest(conversation, role, user, unread):
             'unread': unread,
             'action_url': conversation_url(conversation, role),
         },
+        on_behalf_of=_candidate_sender(conversation, role),
     )
     return True
