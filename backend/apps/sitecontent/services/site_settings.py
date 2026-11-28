@@ -81,6 +81,9 @@ def _string_error(value_type, value, options):
         return f'Tối đa {max_length} ký tự.'
     if not value.strip():
         return None
+    pattern = options.get('pattern')
+    if isinstance(pattern, str) and not re.fullmatch(pattern, value):
+        return 'Giá trị không đúng định dạng, xem nút "?" của mục này.'
     if value_type == 'url' and not (value.startswith('/') or _is_http_url(value)):
         return 'Giá trị phải là URL http(s) hoặc đường dẫn bắt đầu bằng "/".'
     if value_type == 'email':

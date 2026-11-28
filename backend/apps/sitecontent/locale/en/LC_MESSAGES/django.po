@@ -25,6 +25,9 @@ msgstr "An image slide needs a banner image."
 msgid "Slide ảnh cần link hoặc công ty để mở khi bấm."
 msgstr "An image slide needs a link or a company to open on click."
 
+msgid "%(company)s qua %(site)s"
+msgstr "%(company)s via %(site)s"
+
 msgid "Chọn file ảnh."
 msgstr "Choose an image file."
 

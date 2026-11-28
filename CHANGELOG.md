@@ -6,6 +6,32 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-29
+
+#### Changed — Email gửi ứng viên đứng tên công ty: "Tên công ty qua ProCV"
+
+- Email gửi ứng viên thay mặt nhà tuyển dụng (kết quả ứng tuyển, NTD xem/tải CV, lưu kho, lời
+  mời, lịch phỏng vấn, tự động từ chối, tin nhắn và lịch .ics ProCV Connect) hiện người gửi
+  `Công ty X qua ProCV <no-reply@procv.site>`. Địa chỉ gửi giữ nguyên tên miền của ProCV.
+- Chỉ dùng tên công ty đang có người đại diện hợp pháp, chống mạo danh (vd công ty tự đặt tên
+  ngân hàng). "Hồ sơ đã được tiếp nhận", gợi ý việc làm và mọi email gửi nhà tuyển dụng vẫn từ ProCV.
+- Cấu hình mới `email_company_sender_enabled` (bật sẵn) để tắt nhanh. Tên người gửi có ký tự đặc
+  biệt được đặt trong ngoặc kép: trước đây `email_from_name` có dấu phẩy làm lỗi header From.
+- Sau deploy chạy `seed_sitecontent` để hiện công tắc trong trang Cấu hình.
+
+#### Added — Google Analytics 4 theo cấu hình admin, chỉ khi đồng ý Hiệu năng
+
+- Key mới `seo_ga4_measurement_id` (Cấu hình → SEO → Đo lường): dán Measurement ID `G-…` của
+  luồng web GA4 là site bắt đầu gửi dữ liệu. Để trống thì không tải gì. Cấu hình hỗ trợ
+  `options.pattern` để chặn giá trị sai định dạng khi lưu.
+- gtag.js chỉ tải khi người xem đã đồng ý nhóm Hiệu năng, không tải ở cổng quản trị; rút đồng ý
+  thì ngừng gửi và xóa cookie `_ga*`. Bộ tải nằm ở chunk riêng (JS khởi tạo +0,2 KiB).
+- CSP cho phép `https://www.googletagmanager.com` trong `script-src`.
+- Chính sách cookie lên phiên bản 2 (thêm `_ga`, `_ga_<id>` và mục Google Analytics);
+  `CONSENT_POLICY_VERSION` mặc định 2 nên mọi người được hỏi lại đồng ý cookie.
+- Sau deploy: đặt `CONSENT_POLICY_VERSION=2` nếu `.env` production ghi 1, chạy
+  `seed_sitecontent`, rồi nhập Measurement ID ở trang Cấu hình.
+
 ### 2026-11-28
 
 #### Fixed — ml-worker kẹt: so sánh JD–CV và hồ sơ trích xuất CV không chạy

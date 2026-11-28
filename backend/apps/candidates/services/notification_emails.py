@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.template.loader import render_to_string
 
-from apps.sitecontent.selectors import email_branding
+from apps.sitecontent.selectors import email_branding, email_sender
 
 from .notification_events import EVENTS, render_text, switch_enabled
 
@@ -62,6 +62,23 @@ def email_brand_context():
     return branding
 
 
+def _sender_company_name(notification):
+    """Tên công ty gửi notice (đã kiểm người đại diện hợp pháp); rỗng nếu không xác định."""
+    # Imported here: apps.jobs/apps.employers import this app's models at module level.
+    from apps.employers.selectors import email_sender_company_name
+    from apps.jobs.models import Job
+
+    metadata = notification.metadata or {}
+    company_public_id = metadata.get('company_public_id')
+    if not company_public_id and metadata.get('job_public_id'):
+        company_public_id = (
+            Job.objects.filter(public_id=metadata['job_public_id'])
+            .values_list('company__public_id', flat=True)
+            .first()
+        )
+    return email_sender_company_name(company_public_id)
+
+
 def render_notification_email(notification):
     """Return ``(subject, text, html, from_email, reply_to)`` for one notice."""
     spec = EVENTS[notification.event_type]
@@ -86,11 +103,11 @@ def render_notification_email(notification):
         **extra,
     }
     template = f'candidates/email/{spec.email_template}'
-    sender = settings.EMAIL_FROM_ADDRESS
+    sender = email_sender(_sender_company_name(notification) if spec.from_company else '')
     return (
         f'{subject} · {branding["site_name"]}',
         render_to_string(f'{template}.txt', context),
         render_to_string(f'{template}.html', context),
-        f'{branding["from_name"]} <{sender}>' if branding['from_name'] else sender,
-        branding['support_email'] or None,
+        sender['from_email'],
+        sender['reply_to'],
     )

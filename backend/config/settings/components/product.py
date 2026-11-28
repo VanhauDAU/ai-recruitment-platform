@@ -6,7 +6,8 @@ from config.env import config
 
 from .core import IS_PRODUCTION
 
-CONSENT_POLICY_VERSION = config('CONSENT_POLICY_VERSION', default=1, cast=int)
+# Tăng khi chính sách cookie thêm bên thứ ba (2: Google Analytics 4) để hỏi lại mọi người.
+CONSENT_POLICY_VERSION = config('CONSENT_POLICY_VERSION', default=2, cast=int)
 CONSENT_COOKIE_NAME = config('CONSENT_COOKIE_NAME', default='procv_consent')
 CONSENT_COOKIE_MAX_AGE = 180 * 24 * 60 * 60
 CONSENT_COOKIE_SECURE = IS_PRODUCTION
