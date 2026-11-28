@@ -23,23 +23,14 @@ INVALIDATING_CASE_STATUSES = frozenset(
 INITIAL_ONBOARDING_STEP_LABELS = {
     'registration_completed': gettext_lazy('Hồ sơ đăng ký'),
     'email_verified': gettext_lazy('Xác minh email'),
-    'consulting_need_completed': gettext_lazy('Nhu cầu tuyển dụng'),
 }
 
 
-def build_employer_initial_onboarding(recruiter, *, has_recruitment_need=None):
-    """Derive the three steps that gate access to the employer application."""
-    if has_recruitment_need is None:
-        prefetched_needs = getattr(recruiter, 'verification_recruitment_needs', None)
-        has_recruitment_need = (
-            bool(prefetched_needs)
-            if prefetched_needs is not None
-            else recruiter.recruitment_needs.exists()
-        )
+def build_employer_initial_onboarding(recruiter):
+    """Derive the two steps that gate access to the employer application."""
     steps = {
         'registration_completed': recruiter.registration_completed_at is not None,
         'email_verified': recruiter.user.email_verified,
-        'consulting_need_completed': bool(has_recruitment_need),
     }
     missing_steps = [key for key, completed in steps.items() if not completed]
     return {

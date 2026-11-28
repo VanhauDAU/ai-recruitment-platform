@@ -14,7 +14,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.jobs.models import JobCategory
 from common.storage.r2 import private_media_storage
 
 from .. import services
@@ -26,7 +25,6 @@ from ..models import (
     EmployerVerificationCase,
     Industry,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 from .factories import (
     DOCX_BYTES,
@@ -482,19 +480,6 @@ class CompanyUpdateRequestTests(APITestCase):
             policy_version=settings.EMPLOYER_DPA_POLICY_VERSION,
             document_sha256=settings.EMPLOYER_DPA_DOCUMENT_SHA256,
             document_url=settings.EMPLOYER_DPA_DOCUMENT_URL,
-        )
-        category = JobCategory.objects.create(
-            name='Chuyên viên tuyển dụng',
-            category_type=JobCategory.CategoryType.SPECIALIZATION,
-        )
-        RecruitmentNeed.objects.create(
-            recruiter=self.recruiter,
-            position_category=category,
-            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-            is_continuous=True,
-            headcount=1,
-            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-            completed_at=now,
         )
         verification_case = services.get_or_create_verification_case(self.recruiter)
         for doc_type in (

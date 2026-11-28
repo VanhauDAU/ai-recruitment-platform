@@ -8,7 +8,6 @@ import {
   MailOutlined,
   PhoneOutlined,
   SafetyCertificateOutlined,
-  SolutionOutlined,
   UpOutlined,
 } from '@ant-design/icons'
 import { Button } from 'antd'
@@ -23,10 +22,6 @@ const CHECK_DETAILS = {
   registration_completed: {
     description: 'Thông tin nhà tuyển dụng đã được khai báo đầy đủ.',
     icon: IdcardOutlined,
-  },
-  consulting_need_completed: {
-    description: 'Nhu cầu và quy mô tuyển dụng đã được ghi nhận.',
-    icon: SolutionOutlined,
   },
   phone_verified: {
     description: 'Số điện thoại liên hệ đã được xác minh.',
@@ -58,7 +53,7 @@ function completionCopy(completedCount, totalCount) {
   if (completedCount === totalCount) {
     return {
       title: 'Hồ sơ đã hoàn tất toàn bộ điều kiện',
-      description: 'Cả 9 bước xác thực đều đã được đáp ứng và lưu vết trên hệ thống.',
+      description: `Cả ${totalCount} bước xác thực đều đã được đáp ứng và lưu vết trên hệ thống.`,
       status: 'Đã hoàn tất',
     }
   }
@@ -90,7 +85,7 @@ export default function VerificationJourney({ checks = {} }) {
         <div
           className="verification-journey__ring"
           role="progressbar"
-          aria-label="Tiến độ 9 bước xác thực"
+          aria-label={`Tiến độ ${totalCount} bước xác thực`}
           aria-valuemin={0}
           aria-valuemax={totalCount}
           aria-valuenow={completedCount}
@@ -104,7 +99,7 @@ export default function VerificationJourney({ checks = {} }) {
         </div>
 
         <div className="verification-journey__summary">
-          <span className="verification-journey__eyebrow">Hành trình 9 bước</span>
+          <span className="verification-journey__eyebrow">{`Hành trình ${totalCount} bước`}</span>
           <h3 id="verification-journey-title">{copy.title}</h3>
           <p>{copy.description}</p>
         </div>
@@ -136,7 +131,7 @@ export default function VerificationJourney({ checks = {} }) {
         <ol
           id="verification-journey-steps"
           className="verification-checklist"
-          aria-label="Chi tiết 9 bước xác thực"
+          aria-label={`Chi tiết ${totalCount} bước xác thực`}
         >
           {steps.map(([key, label], index) => {
             const done = Boolean(checks[key])

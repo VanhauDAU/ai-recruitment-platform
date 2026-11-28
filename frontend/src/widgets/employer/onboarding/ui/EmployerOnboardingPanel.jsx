@@ -10,7 +10,7 @@ import { completeEmployerRegistration, getEmployerProfile } from '@/entities/acc
 import { getProvinces } from '@/entities/system/location'
 import { useSession } from '@/entities/account/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_CONSULTING_NEED_URL } from '@/shared/config/portals'
+import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_VERIFY_URL } from '@/shared/config/portals'
 import { m } from '@/shared/config/i18n'
 
 const PROFILE_FIELDS = new Set([
@@ -79,7 +79,7 @@ export default function EmployerOnboardingPanel() {
     return <Alert type="error" showIcon message={m.employer_account_onboarding_load_failed()} action={<Button onClick={() => profileQuery.refetch()}>{m.employer_account_domain_retry()}</Button>} />
   }
   if (profileQuery.data?.onboarding?.registration_completed) {
-    return <Navigate to={user?.email_verified ? EMPLOYER_CONSULTING_NEED_URL : EMPLOYER_ACCOUNT_VERIFY_URL} replace />
+    return <Navigate to={user?.email_verified ? EMPLOYER_VERIFY_URL : EMPLOYER_ACCOUNT_VERIFY_URL} replace />
   }
 
   function submit(values) {

@@ -13581,47 +13581,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CompanyUpdateRequest'
           description: ''
-  /api/employer/consulting-need/:
-    get:
-      operationId: employer_consulting_need_retrieve
-      summary: Đọc nhu cầu tuyển dụng ưu tiên trong onboarding
-      tags:
-      - employer-auth
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecruitmentNeed'
-          description: ''
-    post:
-      operationId: employer_consulting_need_create
-      summary: Hoàn tất khảo sát nhu cầu tuyển dụng sau xác thực email
-      tags:
-      - employer-auth
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecruitmentNeedRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/RecruitmentNeedRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/RecruitmentNeedRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecruitmentNeed'
-          description: ''
   /api/employer/conversations/:
     get:
       operationId: employer_conversations_list
@@ -22437,8 +22396,6 @@ components:
           type: boolean
         registration_completed:
           type: boolean
-        consulting_need_completed:
-          type: boolean
         phone_verified:
           type: boolean
         company_linked:
@@ -22461,7 +22418,6 @@ components:
       - candidate_dpa_submitted
       - case_approved
       - company_linked
-      - consulting_need_completed
       - dpa_accepted
       - email_verified
       - phone_verified
@@ -40910,8 +40866,6 @@ components:
           type: boolean
         registration_completed:
           type: boolean
-        consulting_need_completed:
-          type: boolean
         phone_verified:
           type: boolean
         company_linked:
@@ -40951,7 +40905,6 @@ components:
       - candidate_dpa_submitted
       - company_linked
       - completed
-      - consulting_need_completed
       - dpa_accepted
       - email_domain_verified
       - email_verified

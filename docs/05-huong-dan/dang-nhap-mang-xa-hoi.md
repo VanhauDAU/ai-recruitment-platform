@@ -117,7 +117,7 @@ nghĩa là luồng redirect đang hoạt động, chỉ thiếu credential.
 - Tài khoản social mới → tạo với vai trò theo cổng, `email_verified=True`, không có
   mật khẩu. Candidate đi theo onboarding preference; employer đi tới
   `/tuyendung/app/hoan-thien-ho-so` để bổ sung người liên hệ, công ty và
-  consent, rồi khai báo nhu cầu tại `/tuyendung/app/khai-bao-nhu-cau`. Muốn
+  consent, rồi vào checklist `/tuyendung/app/xac-thuc-tai-khoan`. Muốn
   đăng nhập bằng mật khẩu thì dùng "Quên mật khẩu?" (`/quen-mat-khau` cho
   candidate, `/tuyendung/app/quen-mat-khau` cho employer) để đặt mật khẩu lần
   đầu — backend chấp nhận cả tài khoản `has_usable_password() == False`.

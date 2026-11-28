@@ -67,7 +67,6 @@ from .onboarding import (
 from .recruitment_need import (
     RecruitmentNeedDetailView,
     RecruitmentNeedListCreateView,
-    RecruitmentNeedView,
 )
 
 __all__ = [
@@ -121,7 +120,6 @@ __all__ = [
     'EmployerNotificationUnreadCountView',
     'PhoneChallengeView',
     'RecruiterMeView',
-    'RecruitmentNeedView',
     'RecruitmentNeedListCreateView',
     'RecruitmentNeedDetailView',
     'SendPhoneOtpView',

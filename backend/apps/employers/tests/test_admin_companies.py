@@ -5,7 +5,6 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.accounts.tests.factories import make_admin
-from apps.jobs.models import JobCategory
 
 from ..models import (
     Company,
@@ -13,7 +12,6 @@ from ..models import (
     EmployerVerificationCase,
     Industry,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 from ..selectors import admin_companies_queryset
 
@@ -57,17 +55,6 @@ class AdminCompanyApiTests(APITestCase):
             status=EmployerVerificationCase.Status.APPROVED,
             submitted_at=timezone.now(),
             decided_at=timezone.now(),
-        )
-        category = JobCategory.objects.create(
-            name='Nhân sự quản trị công ty',
-            category_type=JobCategory.CategoryType.SPECIALIZATION,
-        )
-        RecruitmentNeed.objects.create(
-            recruiter=self.owner,
-            position_category=category,
-            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-            completed_at=timezone.now(),
         )
 
     def _employer(self, email, full_name):
@@ -208,7 +195,7 @@ class AdminCompanyApiTests(APITestCase):
         self.assertFalse(response.data['results'][0]['initial_onboarding']['completed'])
         self.assertEqual(
             response.data['results'][0]['initial_onboarding']['missing_steps'],
-            ['registration_completed', 'consulting_need_completed'],
+            ['registration_completed'],
         )
 
     def test_directory_resolves_company_logo_and_recruiter_avatar_urls(self):

@@ -19,7 +19,6 @@ export const DOCUMENT_STATUS = {
 export const VERIFICATION_CHECK_LABELS = {
   email_verified: 'Email đã xác minh',
   registration_completed: 'Đăng ký hồ sơ NTD hoàn tất',
-  consulting_need_completed: 'Đã khai báo nhu cầu tuyển dụng',
   phone_verified: 'Số điện thoại đã xác minh',
   company_linked: 'Đã liên kết công ty',
   representative_documents_submitted: 'Đã nộp giấy tờ đại diện',

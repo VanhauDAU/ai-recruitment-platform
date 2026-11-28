@@ -5,7 +5,7 @@ import { VERIFICATION_CHECK_LABELS } from '@/entities/company/admin-employer-ver
 import VerificationJourney from './VerificationJourney'
 
 describe('VerificationJourney', () => {
-  it('counts only the nine public verification steps and keeps details compact by default', async () => {
+  it('counts only the eight public verification steps and keeps details compact by default', async () => {
     const user = userEvent.setup()
     const checks = Object.fromEntries(
       Object.keys(VERIFICATION_CHECK_LABELS).map((key) => [key, true]),
@@ -21,15 +21,15 @@ describe('VerificationJourney', () => {
       />,
     )
 
-    const progress = screen.getByRole('progressbar', { name: 'Tiến độ 9 bước xác thực' })
+    const progress = screen.getByRole('progressbar', { name: 'Tiến độ 8 bước xác thực' })
 
-    expect(progress).toHaveAttribute('aria-valuenow', '9')
-    expect(progress).toHaveAttribute('aria-valuemax', '9')
+    expect(progress).toHaveAttribute('aria-valuenow', '8')
+    expect(progress).toHaveAttribute('aria-valuemax', '8')
     expect(screen.getByText('Hồ sơ đã hoàn tất toàn bộ điều kiện')).toBeInTheDocument()
     expect(screen.queryAllByRole('listitem')).toHaveLength(0)
-    await user.click(screen.getByRole('button', { name: 'Xem 9 bước' }))
-    expect(screen.getAllByRole('listitem')).toHaveLength(9)
-    expect(screen.queryByText('11/9')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Xem 8 bước' }))
+    expect(screen.getAllByRole('listitem')).toHaveLength(8)
+    expect(screen.queryByText('10/8')).not.toBeInTheDocument()
   })
 
   it('highlights the first missing condition as the next step', async () => {
@@ -43,12 +43,12 @@ describe('VerificationJourney', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: 'Xem 9 bước' }))
+    await user.click(screen.getByRole('button', { name: 'Xem 8 bước' }))
     const currentStep = container.querySelector('[aria-current="step"]')
 
     expect(currentStep).not.toBeNull()
-    expect(within(currentStep).getByText('Đã khai báo nhu cầu tuyển dụng')).toBeInTheDocument()
+    expect(within(currentStep).getByText('Số điện thoại đã xác minh')).toBeInTheDocument()
     expect(within(currentStep).getByText('Cần xử lý tiếp')).toBeInTheDocument()
-    expect(screen.getByText('Còn 7 bước')).toBeInTheDocument()
+    expect(screen.getByText('Còn 6 bước')).toBeInTheDocument()
   })
 })

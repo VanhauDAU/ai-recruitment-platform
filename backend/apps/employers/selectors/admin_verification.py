@@ -14,6 +14,7 @@ from ..models import (
     CompanyTaxLookupEvidence,
     EmployerVerificationCase,
     EmployerVerificationEvent,
+    RecruitmentNeed,
 )
 
 
@@ -51,16 +52,15 @@ def admin_verification_cases_queryset(*, params=None, include_detail=False):
         )
         .order_by('doc_type', '-version', '-created_at')
     )
-    prefetches = [
-        Prefetch('documents', queryset=documents),
-        Prefetch(
-            'recruiter__recruitment_needs',
-            to_attr='verification_recruitment_needs',
-        ),
-    ]
+    prefetches = [Prefetch('documents', queryset=documents)]
     if include_detail:
+        # Impact previews fingerprint the recruiter's needs in primary-key order.
         prefetches.extend(
             [
+                Prefetch(
+                    'recruiter__recruitment_needs',
+                    queryset=RecruitmentNeed.objects.order_by('pk'),
+                ),
                 Prefetch(
                     'events',
                     queryset=EmployerVerificationEvent.objects.select_related('actor'),

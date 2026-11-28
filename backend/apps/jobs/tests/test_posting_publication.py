@@ -17,7 +17,6 @@ from apps.employers.models import (
     CompanyFollow,
     EmployerVerificationCase,
     RecruiterProfile,
-    RecruitmentNeed,
 )
 from apps.employers.services import recruiter_job_posting_entitlement
 from common.vietnam_time import vietnam_today
@@ -212,15 +211,6 @@ class JobPublicationTests(JobPostingFixture, TestCase):
                 'registration_completed_at',
                 'dpa_accepted_at',
             ]
-        )
-        RecruitmentNeed.objects.create(
-            recruiter=self.recruiter,
-            position_category=self.category,
-            position_level=RecruitmentNeed.PositionLevel.EMPLOYEE,
-            is_continuous=True,
-            headcount=1,
-            budget_source=RecruitmentNeed.BudgetSource.COMPANY,
-            completed_at=timezone.now(),
         )
         verification_case = self.recruiter.verification_case
         verification_case.status = EmployerVerificationCase.Status.APPROVED

@@ -70,7 +70,6 @@ const ROUTES = Object.freeze({
     ['Giấy phép kinh doanh', '/cai-dat/giay-phep-kinh-doanh', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Bảo vệ dữ liệu cá nhân', '/cai-dat/bao-ve-du-lieu-ca-nhan', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Nhu cầu tuyển dụng', '/cai-dat/nhu-cau-tuyen-dung', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
-    ['Nhu cầu tư vấn', '/khai-bao-nhu-cau', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
     ['Xác thực email NTD', '/xac-thuc-email', ANNOUNCEMENT_ROUTE_ACCESS.PUBLIC],
     ['Xác thực nhà tuyển dụng', '/xac-thuc-tai-khoan', ANNOUNCEMENT_ROUTE_ACCESS.AUTHENTICATED],
   ],

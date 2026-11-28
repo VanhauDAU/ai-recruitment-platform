@@ -53,11 +53,7 @@ def verification_snapshot_scope(case):
     company = Company.objects.get(pk=case.company_id) if case.company_id else None
     if company is not None:
         case._state.fields_cache['company'] = company
-    recruitment_needs = getattr(recruiter, 'verification_recruitment_needs', None)
-    if recruitment_needs is None:
-        recruitment_needs = _prefetched_rows(recruiter, 'recruitment_needs')
-    else:
-        recruitment_needs = tuple(recruitment_needs)
+    recruitment_needs = _prefetched_rows(recruiter, 'recruitment_needs')
     campaigns = _prefetched_rows(recruiter, 'campaigns')
     jobs = _prefetched_rows(user, 'posted_jobs')
     documents = _prefetched_rows(case, 'documents')
@@ -88,7 +84,7 @@ def verification_snapshot_scope(case):
         recruiter=recruiter,
         case=case,
         company=company,
-        recruitment_needs=tuple(recruitment_needs),
+        recruitment_needs=recruitment_needs,
         campaigns=campaigns,
         jobs=jobs,
         documents=documents,

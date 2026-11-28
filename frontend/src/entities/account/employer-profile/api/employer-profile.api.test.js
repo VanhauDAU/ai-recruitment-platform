@@ -10,11 +10,9 @@ import {
   getEmployerIndustries,
   getEmployerPhoneChallenge,
   getEmployerProfile,
-  getEmployerRecruitmentNeed,
   joinEmployerCompany,
   searchEmployerCompanies,
   sendEmployerPhoneOtp,
-  saveEmployerRecruitmentNeed,
   saveEmployerCompanyTradeNameWebsite,
   previewEmployerDataProcessingAgreement,
   uploadEmployerBusinessDocument,
@@ -38,18 +36,6 @@ describe('employer profile API', () => {
 
     await expect(getEmployerProfile()).resolves.toEqual({ onboarding: { account_ready: false } })
     expect(get).toHaveBeenCalledWith('/employer/me/')
-  })
-
-  it('loads and saves the post-verification recruitment need', async () => {
-    get.mockResolvedValue({ data: null })
-    post.mockResolvedValue({ data: { public_id: 'need_1' } })
-    const payload = { position_category: 1, position_level: 'employee', headcount: 2 }
-
-    await expect(getEmployerRecruitmentNeed()).resolves.toBeNull()
-    await expect(saveEmployerRecruitmentNeed(payload)).resolves.toEqual({ public_id: 'need_1' })
-
-    expect(get).toHaveBeenCalledWith('/employer/consulting-need/')
-    expect(post).toHaveBeenCalledWith('/employer/consulting-need/', payload)
   })
 
   it('keeps registration, phone and DPA endpoint contracts', async () => {

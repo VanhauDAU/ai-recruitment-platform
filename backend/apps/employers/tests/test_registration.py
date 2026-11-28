@@ -220,8 +220,7 @@ class EmployerRegistrationTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
-        self.assertFalse(response.data['onboarding']['account_ready'])
-        self.assertFalse(response.data['onboarding']['consulting_need_completed'])
+        self.assertTrue(response.data['onboarding']['account_ready'])
         self.assertIsNone(response.data['company'])
         second = self.client.post(
             reverse('employer-registration-complete'),
@@ -270,44 +269,16 @@ class RecruitmentNeedTests(APITestCase):
         }
         self.client.force_authenticate(user=self.user)
 
-    def test_verified_employer_completes_consulting_need_and_session_becomes_ready(self):
-        response = self.client.post(
-            reverse('employer-consulting-need'), self.payload, format='json'
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
-        need = RecruitmentNeed.objects.get(recruiter=self.recruiter)
-        self.assertEqual(need.position_category, self.category)
-        self.assertEqual(need.headcount, 3)
-        detail = self.client.get(reverse('employer-consulting-need'))
-        self.assertEqual(detail.status_code, status.HTTP_200_OK)
-        self.assertEqual(detail.data['public_id'], need.public_id)
-        self.assertEqual(detail.data['position_category_name'], self.category.name)
-
+    def test_verified_employer_finishes_onboarding_without_recruitment_need(self):
         session = self.client.get(reverse('auth-me'))
+
         self.assertFalse(session.data['employer_onboarding_required'])
         self.assertEqual(session.data['employer_onboarding_step'], 'complete')
         self.assertFalse(session.data['employer_verification_completed'])
-
-        repeated = self.client.post(
-            reverse('employer-consulting-need'), self.payload, format='json'
-        )
-        self.assertEqual(repeated.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('đã hoàn tất', str(repeated.data['detail']))
-
-    def test_unverified_email_cannot_submit_consulting_need(self):
-        self.user.email_verified = False
-        self.user.save(update_fields=['email_verified', 'updated_at'])
-
-        response = self.client.post(
-            reverse('employer-consulting-need'), self.payload, format='json'
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(RecruitmentNeed.objects.filter(recruiter=self.recruiter).exists())
 
-    def test_recruitment_demand_crud_keeps_onboarding_need_and_manages_more_needs(self):
-        first = self.client.post(reverse('employer-consulting-need'), self.payload, format='json')
+    def test_recruitment_demand_crud_manages_needs(self):
+        first = self.client.post(reverse('employer-recruitment-needs'), self.payload, format='json')
         second = self.client.post(
             reverse('employer-recruitment-needs'),
             {
@@ -319,7 +290,8 @@ class RecruitmentNeedTests(APITestCase):
             format='json',
         )
 
-        self.assertEqual(first.status_code, status.HTTP_200_OK, first.data)
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED, first.data)
+        self.assertEqual(first.data['position_category_name'], self.category.name)
         self.assertEqual(second.status_code, status.HTTP_201_CREATED, second.data)
         listed = self.client.get(reverse('employer-recruitment-needs'))
         self.assertEqual(listed.status_code, status.HTTP_200_OK, listed.data)
@@ -333,13 +305,13 @@ class RecruitmentNeedTests(APITestCase):
         self.assertEqual(deleted.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(RecruitmentNeed.objects.filter(recruiter=self.recruiter).count(), 1)
 
-    def test_consulting_need_rejects_non_specialization_category(self):
+    def test_recruitment_need_rejects_non_specialization_category(self):
         domain = JobCategory.objects.create(
             name='Công nghệ',
             category_type=JobCategory.CategoryType.DOMAIN,
         )
         response = self.client.post(
-            reverse('employer-consulting-need'),
+            reverse('employer-recruitment-needs'),
             {
                 **self.payload,
                 'position_category': domain.id,
@@ -350,9 +322,9 @@ class RecruitmentNeedTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('position_category', response.data)
 
-    def test_consulting_need_rejects_past_date_and_inverted_budget(self):
+    def test_recruitment_need_rejects_past_date_and_inverted_budget(self):
         past_date = self.client.post(
-            reverse('employer-consulting-need'),
+            reverse('employer-recruitment-needs'),
             {
                 **self.payload,
                 'target_date': (timezone.localdate() - timedelta(days=1)).isoformat(),
@@ -363,7 +335,7 @@ class RecruitmentNeedTests(APITestCase):
         self.assertIn('target_date', past_date.data)
 
         inverted_budget = self.client.post(
-            reverse('employer-consulting-need'),
+            reverse('employer-recruitment-needs'),
             {
                 **self.payload,
                 'budget_min': 20_000_000,
@@ -374,9 +346,9 @@ class RecruitmentNeedTests(APITestCase):
         self.assertEqual(inverted_budget.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('budget_max', inverted_budget.data)
 
-    def test_consulting_need_rejects_budget_below_one_million(self):
+    def test_recruitment_need_rejects_budget_below_one_million(self):
         response = self.client.post(
-            reverse('employer-consulting-need'),
+            reverse('employer-recruitment-needs'),
             {
                 **self.payload,
                 'budget_min': 999_999,
@@ -388,9 +360,9 @@ class RecruitmentNeedTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('budget_min', response.data)
 
-    def test_consulting_need_accepts_at_most_one_consultation_topic(self):
+    def test_recruitment_need_accepts_at_most_one_consultation_topic(self):
         response = self.client.post(
-            reverse('employer-consulting-need'),
+            reverse('employer-recruitment-needs'),
             {
                 **self.payload,
                 'consultation_topics': [
@@ -406,7 +378,7 @@ class RecruitmentNeedTests(APITestCase):
 
     def test_continuous_hiring_clears_target_date_and_budget_is_optional(self):
         response = self.client.post(
-            reverse('employer-consulting-need'),
+            reverse('employer-recruitment-needs'),
             {
                 **self.payload,
                 'target_date': None,
@@ -417,5 +389,5 @@ class RecruitmentNeedTests(APITestCase):
             format='json',
         )
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         self.assertIsNone(response.data['target_date'])

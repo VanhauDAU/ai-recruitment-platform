@@ -24,8 +24,8 @@ describe('employer verification presentation', () => {
     expect(documentStatusMeta('approved').label).toBe('Đã duyệt')
   })
 
-  it('keeps the shared admin and employer checklist at nine explicit steps', () => {
-    expect(Object.keys(VERIFICATION_CHECK_LABELS)).toHaveLength(9)
+  it('keeps the shared admin and employer checklist at eight explicit steps', () => {
+    expect(Object.keys(VERIFICATION_CHECK_LABELS)).toHaveLength(8)
     expect(VERIFICATION_CHECK_LABELS.case_approved).toBeUndefined()
   })
 
