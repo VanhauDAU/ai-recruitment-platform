@@ -8,7 +8,7 @@ Phạm vi:
 
 Nguồn: PRD_AI_Career_Coach v1.1.
 
-## Sơ đồ use case tổng quát (cập nhật 2026-11-16)
+## Sơ đồ use case tổng quát (cập nhật 2026-11-27)
 
 ![Sơ đồ use case tổng quát](so-do-use-case.png)
 
@@ -35,7 +35,7 @@ cột "Gồm" hoặc mục cuối.
 | Tác nhân | Use case | Gồm | Trạng thái |
 | --- | --- | --- | --- |
 | Khách | Đăng ký tài khoản («include» Xác minh email) | Cổng ứng viên và cổng NTD | ✅ |
-| Khách, Ứng viên | Tìm kiếm và xem chi tiết việc làm | Lọc, so sánh, lưu việc làm | ✅ |
+| Khách, Ứng viên | Tìm kiếm và xem chi tiết việc làm | Lọc, so sánh, lưu việc làm, việc làm gần tôi trên bản đồ | ✅ |
 | Khách, Ứng viên | Xem trang công ty | Theo dõi công ty | ✅ |
 | Ứng viên | Quản lý hồ sơ cá nhân và nguyện vọng việc làm | Cho phép NTD tìm thấy hồ sơ, thông báo việc làm | ✅ |
 | Ứng viên | Xem việc làm gợi ý («include» Đối sánh ngữ nghĩa CV–JD) | | ✅ theo ngữ nghĩa (`semantic-v1`), rơi về luật khi CV chưa có vector |
@@ -43,6 +43,7 @@ cột "Gồm" hoặc mục cuối.
 | Ứng viên | Quản lý CV; Nhập CV từ tệp PDF/DOCX («extend») | Chọn mẫu CV, chia sẻ và tải CV | ✅ |
 | Ứng viên | Ứng tuyển việc làm | Nộp lại sau khi bị từ chối hoặc đã rút | ✅ |
 | Ứng viên | Theo dõi và rút hồ sơ ứng tuyển | Trạng thái đã công bố, rút hồ sơ, nhắc NTD | ✅ |
+| Ứng viên, Nhà tuyển dụng | Nhắn tin và hẹn lịch phỏng vấn (ProCV Connect) | Mở hội thoại, gửi tin, CV, tin tuyển dụng, tệp; NTD hẹn lịch, ứng viên phản hồi hoặc đề nghị đổi giờ; nhắc tin chưa đọc và lịch sắp tới | ✅ |
 | Nhà tuyển dụng | Xác thực tài khoản nhà tuyển dụng | Giấy phép kinh doanh, số điện thoại, cam kết bảo vệ dữ liệu | ✅ |
 | Nhà tuyển dụng | Tạo hoặc tham gia công ty | Gửi yêu cầu tham gia, chờ quản lý công ty duyệt | ✅ |
 | Nhà tuyển dụng | Quản lý trang công ty và thành viên | Biên tập trang (khi có quyền); quản lý công ty duyệt tham gia, cấp/thu quyền biên tập, chuyển quyền, gỡ thành viên, giao tin và chiến dịch | ✅ |
@@ -58,11 +59,18 @@ cột "Gồm" hoặc mục cuối.
 | Quản trị viên | Quản lý mẫu CV | | ✅ |
 | Quản trị viên | Xem thống kê hệ thống | Hàng chờ cần xử lý | ✅ |
 | Người dùng | Đăng nhập; Đăng xuất | Khôi phục mật khẩu | ✅ |
-| (dùng chung) | Đối sánh ngữ nghĩa CV–JD | | ⬜ |
+| (dùng chung) | Đối sánh ngữ nghĩa CV–JD | Mô hình embedding fine-tune chạy local, chấm điểm theo tiêu chí | ✅ |
 
 Chức năng phụ không vẽ thành use case: báo cáo tin và công ty của ứng viên,
 bài viết và trung tâm trợ giúp (khách xem, quản trị viên quản lý), quản lý thông
 báo và cấu hình hệ thống.
+
+### Thay đổi so với bản 2026-11-16
+
+- Thêm use case Nhắn tin và hẹn lịch phỏng vấn (ProCV Connect, ADR-0032) giữa
+  Ứng viên và Nhà tuyển dụng, khớp nhóm phân rã `17-procv-connect`.
+- Đối sánh ngữ nghĩa CV–JD, Tìm kiếm hồ sơ ứng viên và Sàng lọc, xếp hạng hồ sơ
+  bằng AI đã có trong code; việc làm gần tôi gộp vào Tìm kiếm việc làm.
 
 ### Thay đổi so với bản 2026-11-15
 

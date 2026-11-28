@@ -8,6 +8,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-29
 
+#### Changed — Sơ đồ use case tổng quát và ảnh trang mẫu CV
+
+- Sơ đồ use case tổng quát (`docs/01-phan-tich`) cập nhật 27/11: thêm Nhắn tin và hẹn lịch
+  phỏng vấn (ProCV Connect), Đối sánh ngữ nghĩa CV–JD chuyển sang đã làm, việc làm gần tôi gộp
+  vào Tìm kiếm việc làm.
+- Trang danh sách mẫu CV dùng ảnh trợ lý ProCV mới (WebP 8 KB, trong `public/images`) thay ảnh
+  mascot TopCV cũ trên R2.
 #### Changed — Email gửi ứng viên đứng tên công ty: "Tên công ty qua ProCV"
 
 - Email gửi ứng viên thay mặt nhà tuyển dụng (kết quả ứng tuyển, NTD xem/tải CV, lưu kho, lời
