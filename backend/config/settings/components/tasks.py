@@ -65,6 +65,11 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
 # Log của worker đi qua LOGGING của Django (một dòng JSON) thay vì format riêng.
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
+# Tiến trình con phải báo "UP" trong thời hạn này, nếu không sẽ bị SIGKILL. Mặc định 4 giây
+# không đủ cho ml-worker: `worker_process_init` nạp bi-encoder + cross-encoder mất ~10 giây
+# trên VPS, nên sau khi tiến trình con đầu tiên chạy đủ --max-tasks-per-child, tiến trình
+# thay thế cứ bị giết mãi và queue ai-matching đứng (sự cố production 27/11/2026).
+CELERY_WORKER_PROC_ALIVE_TIMEOUT = 120
 CELERY_TASK_DEFAULT_QUEUE = 'default'
 CELERY_TASK_ROUTES = {
     'apps.accounts.tasks.auth_email.*': {'queue': 'auth-email'},
